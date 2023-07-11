@@ -4,9 +4,11 @@
         
         <div>
             <v-row class="header-row" no-gutters>
-                <v-col sm="7" cols="8"></v-col>
-                <v-col sm="2" cols="3" class="score">Score </v-col>
-                <v-col sm="3" cols="1" class="score">Kills</v-col>
+                <v-col   cols="8"></v-col>
+                
+                <v-col  md="1" cols="1" class="score">Score </v-col>
+                <v-col  md="2" cols="2" class="score" v-if="stats.games">Avg Pl. </v-col>
+                <v-col md="1" cols="1" class="score">Kills</v-col>
                 <v-btn icon class="float-icon expand-all" @click="toggleExpand"><v-icon>{{
                     expandedAll
                     ? 'mdi-menu-up' : 'mdi-menu-down'
@@ -22,12 +24,15 @@
                 <div class="entry-main">
                     <div class="entry-header">
                         <v-row class="entry-header-row">
-                            <v-col sm="7" cols="8" class="team-name">
-                                {{ team.name }} 
-                                <IconSpan v-for="(p,i) in getPlacement(team)" :key="i" :icon="'trophy'" class="win-icon" :class="`win-icon-${p}`"></IconSpan>
+                            <v-col  sm="4" md="5" cols="8" class="team-name">
+                                {{ team.name }}
+                                
                             </v-col>
-                            <v-col sm="2" cols="2" class="score">{{ team.overall_stats.score }} </v-col>
-                            <v-col sm="3" cols="2" class="score">{{ team.overall_stats.kills }}</v-col>
+                            <v-col  sm="4" md="3" cols="0" class="text-right d-none d-sm-block"><IconSpan v-for="(p, i) in getPlacement(team)" :key="i" :icon="'trophy'" class="win-icon" :class="`win-icon-${p}`"></IconSpan></v-col>
+                            <v-col  md="1" cols="1" class="score">{{ team.overall_stats.score }} </v-col>
+                            <v-col  md="2" cols="2" class="score" v-if="stats.games">{{ getAvgPlacement(team) }} </v-col>
+
+                            <v-col  md="1" cols="1" class="score">{{ team.overall_stats.kills }}</v-col>
                             <v-btn icon class="float-icon" @click="updateExpanded(team.name)"><v-icon>{{
                                 expanded[team.name]
                                 ? 'mdi-menu-up' : 'mdi-menu-down'
@@ -76,6 +81,7 @@
 import { getDisplayName } from '@/utils/statsUtils';
 import PlayerLink from '@/components/PlayerLink.vue';
 import IconSpan from "@/components/IconSpan.vue";
+import _ from "lodash";
 
 export default {
     components: {
@@ -111,8 +117,11 @@ export default {
             this.stats.teams.forEach(team => this.updateExpanded(team.name))
         },
         getPlacement(team) {
-            if(this.stats.games)
-                return this.stats.games.map(game => game.teams.find(t => t.teamId == team.teamId)?.overall_stats?.teamPlacement || 0).sort();
+            if (this.stats.games)
+                return this.stats.games.map(game => game.teams.find(t => t.teamId == team.teamId)?.overall_stats?.teamPlacement || undefined);//.sort((a, b) => a - b);
+        },
+        getAvgPlacement(team) {
+            return (_.sum(this.getPlacement(team)) / this.stats.total).toFixed(1);
         }
     }
 }
@@ -132,7 +141,9 @@ export default {
 }
 .win-icon {
     font-size: .7em;
-    display: none;
+    color: #000;
+    // display: none;
+
 
     &.win-icon-1 {
         display: inline;
@@ -141,13 +152,16 @@ export default {
 
     &.win-icon-2 {
         display: inline;
-        color: rgb(120, 118, 113);
+        color: rgb(185, 184, 181);
     }
 
     &.win-icon-3 {
         display: inline;
-        color: rgb(140, 54, 5);
+        color: rgb(192, 79, 14);
     }
+
+
+
 }
 .expand-all {
     margin-top: -16px;

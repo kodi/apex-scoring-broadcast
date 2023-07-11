@@ -39,7 +39,7 @@
                     </div>
                 </v-col>
                 <v-col cols="12" sm="10">
-                    <router-view :stats="game == 'overall' ? stats : stats.games?.find(g => g.game == game)"></router-view>
+                    <router-view :stats="game == 'overall' ? stats : stats.games?.find(g => g.game == game)" :overall="stats"></router-view>
                 </v-col>
             </v-row>
         </div>

@@ -4,10 +4,9 @@
         
         <div>
             <v-row class="header-row" no-gutters>
-                <v-col sm="6"></v-col>
-                <v-col sm="2" class="score">Score </v-col>
-                <v-col sm="2" class="score">{{ stats.games ? 'Best Placement' : "Placement" }} </v-col>
-                <v-col sm="2" class="score">Kills</v-col>
+                <v-col sm="7" cols="8"></v-col>
+                <v-col sm="2" cols="3" class="score">Score </v-col>
+                <v-col sm="3" cols="1" class="score">Kills</v-col>
                 <v-btn icon class="float-icon expand-all" @click="toggleExpand"><v-icon>{{
                     expandedAll
                     ? 'mdi-menu-up' : 'mdi-menu-down'
@@ -23,13 +22,12 @@
                 <div class="entry-main">
                     <div class="entry-header">
                         <v-row class="entry-header-row">
-                            <v-col sm="6">{{ team.name }}</v-col>
-                            <v-col sm="2" class="score">{{ team.overall_stats.score }} </v-col>
-                            <v-col sm="2" class="score">{{
-                                team.overall_stats.bestPlacement ?
-                                team.overall_stats.bestPlacement : team.overall_stats.teamPlacement
-                            }} </v-col>
-                            <v-col sm="2" class="score">{{ team.overall_stats.kills }}</v-col>
+                            <v-col sm="7" cols="8" class="team-name">
+                                {{ team.name }} 
+                                <IconSpan v-for="(p,i) in getPlacement(team)" :key="i" :icon="'trophy'" class="win-icon" :class="`win-icon-${p}`"></IconSpan>
+                            </v-col>
+                            <v-col sm="2" cols="2" class="score">{{ team.overall_stats.score }} </v-col>
+                            <v-col sm="3" cols="2" class="score">{{ team.overall_stats.kills }}</v-col>
                             <v-btn icon class="float-icon" @click="updateExpanded(team.name)"><v-icon>{{
                                 expanded[team.name]
                                 ? 'mdi-menu-up' : 'mdi-menu-down'
@@ -75,16 +73,18 @@
 </template>
 
 <script>
-import { displayOptions, getDisplayName } from '@/utils/statsUtils';
+import { getDisplayName } from '@/utils/statsUtils';
 import PlayerLink from '@/components/PlayerLink.vue';
+import IconSpan from "@/components/IconSpan.vue";
+
 export default {
     components: {
-        PlayerLink
+        PlayerLink,
+        IconSpan,
     },
-    props: ["stats"],
+    props: ["stats", "overall"],
     data() {
         return {
-            statsToShow: displayOptions.display.player,
             expanded: {},
             expandedAll: false,
             statsKeys: [
@@ -109,6 +109,10 @@ export default {
         toggleExpand() {
             this.expandedAll = !this.expandedAll;
             this.stats.teams.forEach(team => this.updateExpanded(team.name))
+        },
+        getPlacement(team) {
+            if(this.stats.games)
+                return this.stats.games.map(game => game.teams.find(t => t.teamId == team.teamId)?.overall_stats?.teamPlacement || 0).sort();
         }
     }
 }
@@ -126,6 +130,25 @@ export default {
     border-radius: 6px;
     overflow: hidden;
 }
+.win-icon {
+    font-size: .7em;
+    display: none;
+
+    &.win-icon-1 {
+        display: inline;
+        color: #fb0;
+    }
+
+    &.win-icon-2 {
+        display: inline;
+        color: rgb(120, 118, 113);
+    }
+
+    &.win-icon-3 {
+        display: inline;
+        color: rgb(140, 54, 5);
+    }
+}
 .expand-all {
     margin-top: -16px;
 }
@@ -138,7 +161,9 @@ export default {
     color: $primary-invert;
     display: flex;
 }
-
+.team-name {
+    overflow: hidden;
+}
 .expanded-table {
     margin: auto;
     border-collapse: collapse;
@@ -207,6 +232,8 @@ export default {
 .entry-sub {
     background: $second-tone;
     font-size: .8em;
+    overflow: auto;
+    width: 100%;
 }
 
 .table-header {
@@ -230,6 +257,7 @@ export default {
 
 .leaderboard-container {
     flex-grow: 1;
+    width: 100%;
 }
 
 .v-icon {

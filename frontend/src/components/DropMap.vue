@@ -54,13 +54,13 @@
                     .primary-poi {
                         font-size: 38px;    
                     }
-                    .team-name {
+                    .d-team-name {
                         font-size: 25px;
                         fill: white;
                         stroke: #0009;
                         cursor: pointer;
                     }
-                    .large-team-name {
+                    .d-large-team-name {
                         font-size: 37px;
                         stroke: black;
                             stroke-width: 10px;
@@ -92,7 +92,7 @@
                                 class="poi-name" :class="{ 'primary-poi': l.primary }">{{
                                     l.name }}</text>
                             <text v-for="(t, k) in l.teams" :x="l.namePos.x" :y="l.namePos.y + (35 * (k + 1)) + 5"
-                                text-anchor="middle" class="team-name" :key="t + team">{{ t }}</text>
+                                text-anchor="middle" class="d-team-name" :key="t + team">{{ t }}</text>
                         </g>
                     </svg>
                 </template>
@@ -113,14 +113,14 @@
                             stroke-dasharray="4 1 2" ></polygon>
                         <template v-if="hidePoiNames">
                             <text v-for="(t, k) in l.teams" :x="l.namePos.x" :y="l.namePos.y + (35 * k) + 5"
-                                text-anchor="middle" class="large-team-name team-name" :class="{ 'poi-outline': !downloading }" :key="t" @click="selectedTeam = t">{{ t }}</text>
+                                text-anchor="middle" class="d-large-team-name d-team-name" :class="{ 'poi-outline': !downloading }" :key="t" @click="selectedTeam = t">{{ t }}</text>
                         </template>
                         <template v-else>
                             <text @click="claim(l)" v-if="shouldShowName(l)" :x="l.namePos.x" :y="l.namePos.y"
                                 text-anchor="middle" class="poi-name" :class="{ 'primary-poi': l.primary, 'poi-outline': !downloading }">{{
                                     l.name }}</text>
                             <text v-for="(t, k) in l.teams" :x="l.namePos.x" :y="l.namePos.y + (35 * (k + 1)) + 5"
-                                text-anchor="middle" class="team-name" :class="{ 'poi-outline': !downloading }" :key="t" @click="selectedTeam = t">{{ t }}</text>
+                                text-anchor="middle" class="d-team-name" :class="{ 'poi-outline': !downloading }" :key="t" @click="selectedTeam = t">{{ t }}</text>
                         </template>
                     </g>
                     

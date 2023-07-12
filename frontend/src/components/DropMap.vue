@@ -68,7 +68,7 @@
                             
                     }
                     .poly {
-                        stroke: #ff000bff;
+                        <!-- stroke: #ff000bff; -->
                         fill: #ff000b77;
                     }
                     .link {
@@ -109,7 +109,7 @@
                     
                     <g v-for="l in locations" :key="l.name">
                         <polygon v-if="claiming && shouldShowName(l)" @click="claim(l)" 
-                            :points="l.points.map(p => p.join(',')).join(' ')" stroke-width="4" class="poly dotted"
+                            :points="l.points.map(p => p.join(',')).join(' ')" stroke-width="4" class="poly dotted" :stroke="teamColor"
                             stroke-dasharray="4 1 2" ></polygon>
                         <template v-if="hidePoiNames">
                             <text v-for="(t, k) in l.teams" :x="l.namePos.x" :y="l.namePos.y + (35 * k) + 5"

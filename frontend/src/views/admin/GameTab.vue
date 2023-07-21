@@ -411,8 +411,6 @@ export default {
 			this.showCSVDialog = false
 
 			this.$apex.exportCsv(
-				this.organizer,
-				this.eventId,
 				this.csvGame,
 				this.optionTeamOrPlayer,
 				selectedKeys,
@@ -436,7 +434,7 @@ export default {
 		async addGame() {
 			this.loading = true;
 			let result = await this.$apex.generateStats(
-				this.eventId,
+				this.matchId,
 				this.trimmedStatsCode,
 				this.game,
 				this.selectedGame,
@@ -463,14 +461,14 @@ export default {
 			await this.fetchSettings();
 		},
 		async updateStats() {
-			this.stats = await this.$apex.getStats(this.organizer, this.eventId, "overall");
+			this.stats = await this.$apex.getStats(this.matchId, "overall");
 			if (this.stats && this.stats.games)
 				this.game = this.stats.games[this.stats.games.length - 1].game + 1;
 			else
 				this.game = 1;
 		},
 		async deleteStats(game) {
-			await this.$apex.deleteStats(this.organizer, this.eventId, game);
+			await this.$apex.deleteStats(this.matchId, game);
 			await this.updateStats();
 		},
 		async getUnclaimedLiveData() {

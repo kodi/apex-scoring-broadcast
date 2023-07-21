@@ -180,7 +180,7 @@ export default {
     },
     async mounted() {
         let matchList = await this.$apex.getMatchList(this.organizer);
-        this.matchList = matchList?.map(m => m.eventId);
+        this.matchList = matchList?.map(m => ({ value: m.id, text: m.eventId }));
         this.clientList = Object.keys(await this.$apex.getClients(this.organizer));
     },
     components: { IconBtnFilled }

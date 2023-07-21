@@ -19,9 +19,9 @@
                                 <div class="team-name"> {{ team.name }}</div>
                                 <div class="team-score"> {{ team.score }}</div>
                             </div>
-                            <div class="view-more"><router-link
-                                    :to="{ name: 'tournament.standings', params: { eventId: match.eventId, organizer: match.organizer, game: 'overall' } }">View
-                                    More</router-link></div>
+                            <div class="view-more">
+                                <MatchLink :matchId="match.matchId" :eventId="match.eventId" :organizer="match.organizer">View More</MatchLink>
+                            </div>
                         </div>
                     </v-col>
                 </v-row>
@@ -35,9 +35,11 @@
 
 <script>
 import NavBar from "../components/NavBar.vue"
+import MatchLink from "../components/MatchLink.vue"
 export default {
     props: ["organizer", "eventId"],
     components: {
+        MatchLink,
         NavBar,
     },
     data() {

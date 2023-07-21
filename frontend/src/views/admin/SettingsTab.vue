@@ -170,13 +170,13 @@ export default {
     },
     computed: {
         publicFullUrl() {
-            return window.location.origin + this.$router.resolve({ name: 'tournament.standings', params: { eventId: this.eventId, organizer: this.organizer, game: "overall" } }).href;
+            return window.location.origin + this.$router.resolve({ name: 'tournament.standings', params: { organizer: this.organizer, matchSlug: this.matchId, game: "overall" } }).href;
         },
         publicFullUrlDrops() {
-            return window.location.origin + this.$router.resolve({ name: 'tournament.drops', params: { eventId: this.eventId, organizer: this.organizer } }).href;
+            return window.location.origin + this.$router.resolve({ name: 'tournament.drops', params:  { organizer: this.organizer, matchSlug: this.matchId } }).href;
         },
         summaryUrl() {
-            return encodeURI(`${this.$apex.config.fullUrl}stats/${this.organizer}/${this.eventId}/summary`);
+            return encodeURI(`${this.$apex.config.fullUrl}stats/${this.matchId}/summary`);
         },
         rawCommand() {
             return `$(urlfetch ${this.summaryUrl}) -- ${this.publicUrl}`;
@@ -202,7 +202,7 @@ export default {
         async refreshPublicOptions() {
             if (this.eventId) {
                 let options = await this.$apex.getPublicSettings(this.matchId);
-                let overall = await this.$apex.getStats(this.organizer, this.eventId, "overall");
+                let overall = await this.$apex.getStats(this.matchId, "overall");
                 overall = overall.teams.map(t => ({ name: t.name, teamId: parseInt(t.teamId), matchId: this.matchId })).sort((a, b) => a.teamId - b.teamId);
 
                 let teams = await this.$apex.getMatchTeams(this.matchId);

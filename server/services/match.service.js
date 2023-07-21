@@ -8,9 +8,8 @@ function getCacheKey(value, option) {
 async function getOrganizerMatch(organizerName) {
     return await cache.getOrSet(getCacheKey(organizerName, "selected_match"), async () => {
         return await db("organizers")
-            .join("match", "match.id", "organizers.selected_match")
             .where({ username: organizerName })
-            .first(["match.id as id", "match.eventId"])
+            .first(["selected_match as matchId"])
     }, 300);
 }
 
@@ -90,7 +89,10 @@ async function getMatch(organizerName, eventId) {
 }
 
 async function getMatchById(id) {
-    return await db("match").where({ id }).first();
+    return await db("match")
+        .join("organizers", "organizers.id", "match.organizer")
+        .where({ "match.id" : id })
+        .first(["match.id as id", "eventId", "organizers.id as organizer", "username as organizerName"]);
 }
 
 async function setMatchPolling(matchId, pollStart, pollEnd, statsCodes) {

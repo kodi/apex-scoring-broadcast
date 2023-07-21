@@ -2,8 +2,8 @@
     <div>
         <div class="broadcast-page">
             <component v-for="overlay in scene.overlays" :is="overlay.type" :settings="overlay.settings" :stats="stats"
-                :liveData="liveData" :key="overlay.id" :observer="observer" :observerTeam="observerTeam" :eventId="eventId"
-                :match="match" :observerPlayer="observerPlayer" :display="displayOptions" :organizer="organizer"/>
+                :matchId="matchId" :liveData="liveData" :key="overlay.id" :observer="observer" :observerTeam="observerTeam"
+                :observerPlayer="observerPlayer" :display="displayOptions" :organizer="organizer"/>
             <div id="credit1" class="credit dark"><img width="150" src="/img/powered_by.png"></div>
             <!-- <div id="credit2" class="credit" :class="{ dark: displayOptions.dark }">Powered by overstat.gg</div> -->
         </div>
@@ -44,10 +44,9 @@ export default {
             ws: undefined,
             displayOptions: {},
             scene: {},
-            eventId: undefined,
             apexClient: "",
             observerName: "",
-            match: {},
+            matchId: undefined,
         }
     },
     computed: {
@@ -69,9 +68,6 @@ export default {
                 this.ws.close();
             }
         },
-        async eventId() {
-            this.match = await this.$apex.getMatch(this.organizer, this.eventId);
-        }
     },
     methods: {
         async updateScores() {
@@ -79,11 +75,12 @@ export default {
             this.displayOptions = displays.find(d => d.id == this.display);
             this.scene = this.displayOptions.scenes.find(s => this.displayOptions.activeScene == s.id);
 
-            if (this.displayOptions.selectedMatch?.length > 0) {
-                this.eventId = this.displayOptions.selectedMatch;
+            let overrideMatch = this.displayOptions.selectedMatch;
+            if (overrideMatch && !isNaN(overrideMatch)) {
+                this.matchId = overrideMatch;
             } else {
                 let selected = await this.$apex.getSelectedMatch(this.organizer);
-                this.eventId = selected.eventId;
+                this.matchId = selected.matchId;
             }
 
             const current = this.apexClient;
@@ -102,9 +99,7 @@ export default {
                 this.connectWs();
             }
 
-            this.stats = await this.$apex.getStats(this.organizer, this.eventId, "overall");
-
-
+            this.stats = await this.$apex.getStats(this.matchId, "overall");
         },
         async connectWs() {
             console.log("Connecting to ws ", this.organizer, this.apexClient);

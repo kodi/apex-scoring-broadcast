@@ -549,7 +549,7 @@ module.exports = function router(app) {
             token,
         } = req.params;
 
-        if (matchId.length || !map) {
+        if (isNaN(matchId) || !map) {
             return res.send({});
         }
 

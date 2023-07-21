@@ -170,7 +170,7 @@ export default {
     },
     computed: {
         publicFullUrl() {
-            return window.location.origin + this.$router.resolve({ name: 'tournament.standings', params: { organizer: this.organizer, matchSlug: this.matchId, game: "overall" } }).href;
+            return window.location.origin + this.$router.resolve({ name: 'tournament', params: { organizer: this.organizer, matchSlug: this.matchId, game: "overall" } }).href;
         },
         publicFullUrlDrops() {
             return window.location.origin + this.$router.resolve({ name: 'tournament.drops', params:  { organizer: this.organizer, matchSlug: this.matchId } }).href;

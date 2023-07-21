@@ -203,7 +203,7 @@ export default {
             if (this.eventId) {
                 let options = await this.$apex.getPublicSettings(this.matchId);
                 let overall = await this.$apex.getStats(this.matchId, "overall");
-                overall = overall.teams.map(t => ({ name: t.name, teamId: parseInt(t.teamId), matchId: this.matchId })).sort((a, b) => a.teamId - b.teamId);
+                overall = overall?.teams?.map(t => ({ name: t.name, teamId: parseInt(t.teamId), matchId: this.matchId })).sort((a, b) => a.teamId - b.teamId);
 
                 let teams = await this.$apex.getMatchTeams(this.matchId);
                 teams = teams?.sort((a, b) => a.teamId - b.teamId);

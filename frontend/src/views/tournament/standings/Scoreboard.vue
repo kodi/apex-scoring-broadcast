@@ -28,7 +28,9 @@
                                 {{ team.name }}
                                 
                             </v-col>
-                            <v-col  sm="4" md="3" cols="0" class="text-right d-none d-sm-block"><IconSpan v-for="(p, i) in getPlacement(team)" :key="i" :icon="'trophy'" class="win-icon" :class="`win-icon-${p}`"></IconSpan></v-col>
+                            <v-col  sm="4" md="3" cols="0" class="text-right d-none d-sm-block">
+                                <IconSpan v-for="(p, i) in getPlacement(team)" :key="i" icon="trophy" class="win-icon" :class="`win-icon-${p}`"></IconSpan>
+                            </v-col>
                             <v-col  md="1" cols="1" class="score">{{ team.overall_stats.score }} </v-col>
                             <v-col  md="2" cols="2" class="score" v-if="stats.games">{{ getAvgPlacement(team) }} </v-col>
 

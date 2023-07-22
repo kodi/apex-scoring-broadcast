@@ -4,7 +4,7 @@
  */
 exports.up = function(knex) {
     return knex.raw(`
-        ALTER TABLE match ADD COLUMN "archived" boolean;
+        ALTER TABLE match ADD COLUMN "archived" boolean NOT NULL DEFAULT FALSE;
     `);
 };
 

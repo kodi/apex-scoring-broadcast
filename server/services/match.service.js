@@ -21,14 +21,19 @@ async function setOrganizerMatch(organizerName, match) {
     cache.del(getCacheKey(organizerName, "selected_match"));
 }
 
-async function getMatchList(organizerName, ) {
-    return await cache.getOrSet(getCacheKey(organizerName, "match_list"), async () => {
-        let result = await db("match")
+async function getMatchList(organizerName, archived = false) {
+    return await cache.getOrSet(getCacheKey(organizerName, "match_list_" + archived), async () => {
+        let query = db("match")
             .join("organizers", "organizers.id", "match.organizer")
-            .where({ username: organizerName })
-            .orderBy("match.id", "desc")
-            .select(["match.id as id", "eventId"]);
-        return result;
+            .where({ username: organizerName });
+            
+        if (!archived)
+            query.andWhere("archived", '<>', true)
+
+        let result = query.orderBy("match.id", "desc")
+            .select(["match.id as id", "eventId", "archived"]);
+        
+        return await result;
     }, 300)
 }
 
@@ -118,10 +123,19 @@ async function getMatchPolling(matchId) {
     }, 300);
 }
 
-async function archiveMatch(matchId, archived = true) {
-    return await db("match")
-        .where({ matchId })
+async function archiveMatch(organizer, matchId, archived = true) {
+    await db("match")
+        .where({ id: matchId })
         .update({ archived });
+    let selected = await getOrganizerMatch(organizer.username);
+
+    console.log(selected, matchId);
+    if (selected == matchId) {
+        await setOrganizerMatch(organizer.username, null);
+    }
+    await cache.del(getCacheKey(organizer.username, "match_list_" + true))
+    await cache.del(getCacheKey(organizer.username, "match_list_" + false))
+
 }
 
 async function cloneMatch(organizer, eventId, matchId) {
@@ -143,6 +157,8 @@ async function cloneDataAndReset(organizer, eventId, matchId) {
         await trx("player_game_stats").where({ matchId }).update({ matchId: newMatch });
         await trx("team_game_stats").where({ matchId }).update({ matchId: newMatch });
     });
+
+    console.log("neMatch", newMatch);
 
     await archiveMatch(newMatch);
 }

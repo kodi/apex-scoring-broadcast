@@ -5,10 +5,10 @@ config.statsUrl = process.argv[2] || config.statsUrl;
 const { verifyOrganizerHeaders, verifyAdminHeaders } = require("../middleware/auth");
 const apexService = new require("../services/apex.service")(config);
 const authService = require("../services/auth.service");
-const matchService = require("../services/match.service");
 const dropService = require("../services/drops.service");
 const broadcastService = require("../services/broadcast.service");
 const cache = require("../services/cache.service");
+const matchService = require("../services/match.service");
 const shortLinkService = require("../services/short_link.service.js");
 const wsHandlerService = require("../services/ws_handler.service.js");
 const liveService = require("../services/live.service");
@@ -17,15 +17,7 @@ const playerService = require("../services/player.service");
 const { redis } = require("../connectors/redis");
 
 const SHORT_LINK_PREFIX = "_";
-module.exports = function router(app) {
-
-    async function deleteCache(matchId, game) {
-        await cache.del(`stats:${matchId}-${game}`);
-        await cache.del(`stats:${matchId}-overall`);
-        await cache.del(`stats:${matchId}-stacked`);
-        await cache.del(`stats:${matchId}-summary`);
-        await cache.del(`stats:${matchId}-${game}-livedata-parsed`);
-    }
+module.exports = function setup(app) {
 
     async function checkAutoPoll(matchId) {
         let cacheKey = `match_polling_skip_${matchId}`;
@@ -34,9 +26,6 @@ module.exports = function router(app) {
         let lastPoll = await redis.set(cacheKey, now, "EX", 90, "NX");
 
         if (lastPoll === "OK") {
-            
-            console.log("Checking for new games on ", matchId)
-
             const pollingSettings = await matchService.getMatchPolling(matchId);
             console.log(matchId, pollingSettings, now);
 
@@ -45,7 +34,6 @@ module.exports = function router(app) {
                 let newStats = stats.filter(stat => !pollingSettings.pollCurrent || console.log(matchId, pollingSettings.pollCurrent, stat.match_start * 1000, pollingSettings.pollCurrent < (stat.match_start * 1000) ) || pollingSettings.pollCurrent < (stat.match_start * 1000));
                 let latestGame = await statsService.getLatestedGame(matchId);
 
-                console.log("Found new games", newStats.map(s => s.match_start));
 
                 for (let stat of newStats) {
                     await processStats(matchId, ++latestGame.game, stat);
@@ -116,7 +104,7 @@ module.exports = function router(app) {
 
         gameStats = apexService.generateGameReport(gameStats, placementPoints, killPoints, ringKillPoints);
         let gameId = await statsService.writeStats(matchId, game, gameStats, source);
-        await deleteCache(matchId, game);
+        await cache.deleteMatchCache(matchId, game);
 
         return { gameId, ...gameStats };
     }
@@ -147,115 +135,11 @@ module.exports = function router(app) {
         res.send(organizer);
     })
 
-    app.get("/match/:organizer/:eventId", async (req, res) => {
-        let result = await matchService.getMatch(req.params.organizer, req.params.eventId);
-        res.send(result);
-    })
-
-    app.get("/match/:matchId", async (req, res) => {
-        let result = await matchService.getMatchById(req.params.matchId);
-        res.send(result);
-    })
-
-    app.post("/settings/broadcast/:organizer", verifyOrganizerHeaders, async (req, res) => {
-        await broadcastService.setBroadcastSettings(req.organizer, req.body);
-        res.sendStatus(200);
-    })
-
-    app.get("/settings/broadcast/:organizer", async (req, res) => {
-        let result = await broadcastService.getBroadcastSettings(req.params.organizer);
-        res.send(result);
-    })
-
-    app.get("/settings/match/:matchId/teams", async (req, res) => {
-        let result = await matchService.getMatchTeams(req.params.matchId);
-        res.send(result);
-    })
-
-    app.post("/settings/match/:matchId/team", verifyOrganizerHeaders, async (req, res) => {
-        const {
-            teamId,
-            name
-        } = req.body;
-
-        let matchId = req.params.matchId;
-        await matchService.setMatchTeam(matchId, teamId, name);
-
-        deleteCache(matchId, "overall");
-        res.sendStatus(200);
-    })
-
-    app.post("/settings/match/:matchId", verifyOrganizerHeaders, async (req, res) => {
-        await matchService.setMatchSettings(req.params.matchId, req.body);
-        res.sendStatus(200);
-    })
-
-    app.get("/settings/match/:matchId", async (req, res) => {
-        let result = await matchService.getMatchSettings(req.params.matchId);
-        res.send(result);
-    })
-
-    app.get("/settings/match_list/:organizer", async (req, res) => {
-        let result = await matchService.getMatchList(req.params.organizer);
-        res.send(result);
-    })
-
-    app.post("/organizer/match/:organizer/", async (req, res) => {
-        await matchService.setOrganizerMatch(req.params.organizer, req.body.match);
-        res.sendStatus(200);
-    })
-
-    app.get("/organizer/match/:organizer/", async (req, res) => {
-        let result = await matchService.getOrganizerMatch(req.params.organizer);
-        res.send(result);
-    })
-
-    app.post("/settings/default_apex_client/:organizer/", async (req, res) => {
-        await broadcastService.setOrganizerDefaultApexClient(req.params.organizer, req.body.client);
-        res.sendStatus(200);
-    })
-
-    app.get("/settings/default_apex_client/:organizer/", async (req, res) => {
-        let result = await broadcastService.getOrganizerDefaultApexClient(req.params.organizer);
-        res.send(result);
-    })
-
-    app.post("/settings/auto_poll/", verifyOrganizerHeaders, async (req, res) => {
-        const {
-            matchId,
-            pollStart,
-            pollEnd,
-            statsCodes
-        } = req.body;
-
-        try {
-            await matchService.setMatchPolling(matchId, pollStart, pollEnd, statsCodes);
-            res.sendStatus(200);
-        } catch (err) {
-            console.log(err);
-            res.send(err);
-        }
-    })
-
-    app.get("/settings/auto_poll/:matchId",verifyOrganizerHeaders,  async (req, res) => {
-        const {
-            matchId
-        } = req.params;
-
-        let result = await matchService.getMatchPolling(matchId);
-        res.send(result);
-    })
-
     app.get("/stats/code/:statsCode", verifyOrganizerHeaders, async (req, res) => {
         let stats = await apexService.getStatsFromCode(req.params.statsCode);
         stats = stats.map(stat => apexService.generateGameReport(stat));
 
         res.send(stats);
-    })
-
-    app.post("/match", verifyOrganizerHeaders, async (req, res) => {
-        let id = await matchService.createMatch(req.organizer, req.body.eventId);
-        res.send({ match: id });
     })
 
     app.post("/stats", verifyOrganizerHeaders, async (req, res) => {
@@ -412,7 +296,7 @@ module.exports = function router(app) {
         } = req.params;
 
         await statsService.deleteStats(matchId, game);
-        await deleteCache(matchId, game);
+        await cache.deleteMatchCache(matchId, game);
 
         res.sendStatus(200);
     })
@@ -426,7 +310,7 @@ module.exports = function router(app) {
 
         await statsService.editScore(gameId, teamId, score);
         let game = await statsService.getGame(gameId);
-        await deleteCache(game.matchId, game.game)
+        await cache.deleteMatchCache(game.matchId, game.game)
         res.sendStatus(200);
     })
 
@@ -580,7 +464,7 @@ module.exports = function router(app) {
         res.sendStatus(200);
     });
 
-    app.ws("/", (ws, req) => {
+    app.ws("/", (ws) => {
         ws.on("message", (msg) => console.log(msg));
     })
 

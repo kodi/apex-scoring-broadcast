@@ -175,6 +175,23 @@ function apexService(config) {
         }, { headers: getApiKeyHeaders() });
     }
 
+    async function archiveMatch(matchId) {
+        await axios.post(config.baseUrl + "match/archive", {matchId}, { headers: getApiKeyHeaders() });
+    }
+
+    async function unArchiveMatch(matchId) {
+        await axios.post(config.baseUrl + "match/archive", { matchId, archive: false}, { headers: getApiKeyHeaders() });
+    }
+
+    async function cloneMatch(eventId, matchId) {
+        await axios.post(config.baseUrl + "match/clone", {matchId, eventId}, { headers: getApiKeyHeaders() });
+    }
+
+    async function cloneDataAndReset(eventId, matchId) {
+        await axios.post(config.baseUrl + "match/clone_reset", { matchId, eventId }, { headers: getApiKeyHeaders() });
+    }
+
+
     async function setOrganizerDefaultApexClient(organizer, client) {
         await axios.post(config.baseUrl + "settings/default_apex_client/" + organizer, { client }, { headers: getApiKeyHeaders() });
     }
@@ -329,6 +346,10 @@ function apexService(config) {
         getDrops,
         deleteDrop,
         deleteDropAdmin,
-        getMatchById
+        getMatchById,
+        archiveMatch,
+        unArchiveMatch,
+        cloneMatch,
+        cloneDataAndReset
     }
 }

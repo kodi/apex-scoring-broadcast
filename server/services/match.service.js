@@ -21,7 +21,7 @@ async function setOrganizerMatch(organizerName, match) {
     cache.del(getCacheKey(organizerName, "selected_match"));
 }
 
-async function getMatchList(organizerName) {
+async function getMatchList(organizerName, ) {
     return await cache.getOrSet(getCacheKey(organizerName, "match_list"), async () => {
         let result = await db("match")
             .join("organizers", "organizers.id", "match.organizer")
@@ -118,6 +118,35 @@ async function getMatchPolling(matchId) {
     }, 300);
 }
 
+async function archiveMatch(matchId, archived = true) {
+    return await db("match")
+        .where({ matchId })
+        .update({ archived });
+}
+
+async function cloneMatch(organizer, eventId, matchId) {
+    let newMatch = await createMatch(organizer, eventId);
+    let settings = await getMatchSettings(matchId);
+    await setMatchSettings(newMatch, settings);
+
+    let teams = await getMatchTeams(matchId);
+    teams.forEach(team => setMatchTeam(newMatch, team.teamId, team.name));
+    return newMatch;
+}
+
+async function cloneDataAndReset(organizer, eventId, matchId) {
+    let newMatch = await cloneMatch(organizer, eventId, matchId);
+
+    await db.transaction(async trx => {
+        await trx("game").where({ matchId }).update({ matchId: newMatch });
+        await trx("drops").where({ matchId }).update({ matchId: newMatch });
+        await trx("player_game_stats").where({ matchId }).update({ matchId: newMatch });
+        await trx("team_game_stats").where({ matchId }).update({ matchId: newMatch });
+    });
+
+    await archiveMatch(newMatch);
+}
+
 module.exports = {
     getMatchSettings,
     setMatchSettings,
@@ -132,4 +161,7 @@ module.exports = {
     setMatchPolling,
     updateMatchPolling,
     getMatchPolling,
+    archiveMatch,
+    cloneMatch,
+    cloneDataAndReset
 }

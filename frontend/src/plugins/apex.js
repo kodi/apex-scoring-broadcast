@@ -21,6 +21,16 @@ function apexService(config) {
         return localStorage.getItem("organizer-key");
     }
 
+    function sanatizedEventId(eventId) {
+        if(eventId)
+            return eventId.replace(/[\W_]+/g, "_").substring(0, 30);
+    }
+
+    function getMatchPageUrl(router, organizer, matchId, eventId, page = "tournament", game = "overall") {
+        eventId = sanatizedEventId(eventId);
+        return window.location.origin + router.resolve({ name: page, params: { organizer: organizer, matchSlug: matchId + (eventId ? '.' + eventId : ""), game} }).href
+    }
+
     async function login(username, key) {
         let result = await axios.post(`${config.baseUrl}auth/organizer`, { username, key });
 
@@ -191,6 +201,9 @@ function apexService(config) {
         await axios.post(config.baseUrl + "match/clone_reset", { matchId, eventId }, { headers: getApiKeyHeaders() });
     }
 
+    async function updateEventId(matchId, eventId) {
+        await axios.patch(config.baseUrl + "match", { matchId, eventId }, { headers: getApiKeyHeaders() });
+    }
 
     async function setOrganizerDefaultApexClient(organizer, client) {
         await axios.post(config.baseUrl + "settings/default_apex_client/" + organizer, { client }, { headers: getApiKeyHeaders() });
@@ -206,8 +219,8 @@ function apexService(config) {
         return data;
     }
 
-    async function getMatchList(organizer) {
-        let result = await axios.get(config.baseUrl + "settings/match_list/" + organizer, { headers: getApiKeyHeaders() });
+    async function getMatchList(organizer, archived) {
+        let result = await axios.get(config.baseUrl + "settings/match_list/" + organizer + (archived ? "?archived=true" : ""), { headers: getApiKeyHeaders() });
         return result.data;
     }
 
@@ -308,7 +321,9 @@ function apexService(config) {
 
     return {
         config,
+        
         getApiKey,
+        getMatchPageUrl,
         getStats,
         generateStats,
         getBroadcastSettings,
@@ -350,6 +365,7 @@ function apexService(config) {
         archiveMatch,
         unArchiveMatch,
         cloneMatch,
-        cloneDataAndReset
+        cloneDataAndReset,
+        updateEventId,
     }
 }

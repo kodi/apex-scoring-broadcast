@@ -5,6 +5,11 @@ function getCacheKey(value, option) {
     return `MATCH-SETTING:${value}-${option}`;
 }
 
+async function resetMatchListCache(organizer) {
+    await cache.del(getCacheKey(organizer.username, "match_list_" + true))
+    await cache.del(getCacheKey(organizer.username, "match_list_" + false))
+}
+
 async function getOrganizerMatch(organizerName) {
     return await cache.getOrSet(getCacheKey(organizerName, "selected_match"), async () => {
         return await db("organizers")
@@ -40,7 +45,7 @@ async function getMatchList(organizerName, archived = false) {
 async function createMatch(organizer, eventId) {
     let id = await db("match").insert({ organizer: organizer.id, eventId }, ["id"]);
     await setOrganizerMatch(organizer.username, id[0].id);
-    await cache.del(getCacheKey(organizer.username, "match_list"));
+    await resetMatchListCache(organizer);
     return id[0].id;
 }
 
@@ -133,9 +138,7 @@ async function archiveMatch(organizer, matchId, archived = true) {
     if (selected == matchId) {
         await setOrganizerMatch(organizer.username, null);
     }
-    await cache.del(getCacheKey(organizer.username, "match_list_" + true))
-    await cache.del(getCacheKey(organizer.username, "match_list_" + false))
-
+    await resetMatchListCache(organizer);
 }
 
 async function cloneMatch(organizer, eventId, matchId) {
@@ -160,7 +163,13 @@ async function cloneDataAndReset(organizer, eventId, matchId) {
 
     console.log("neMatch", newMatch);
 
-    await archiveMatch(newMatch);
+    await archiveMatch(organizer, newMatch);
+}
+
+async function updateEventId(organizer, matchId, eventId) {
+    await db("match").update({ eventId }).where({ id: matchId });
+    await resetMatchListCache(organizer);
+
 }
 
 module.exports = {
@@ -179,5 +188,6 @@ module.exports = {
     getMatchPolling,
     archiveMatch,
     cloneMatch,
-    cloneDataAndReset
+    cloneDataAndReset,
+    updateEventId
 }

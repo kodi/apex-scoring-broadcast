@@ -21,16 +21,14 @@
                             <v-card class="ma-2">
                                 <v-card-title>Settings</v-card-title>
                                 <v-card-text>
-                                    <v-text-field v-model="publicData.title" label="Public Title"></v-text-field>
+                                    <v-text-field :value="eventId" label="Match Name" outlined readonly append-icon="fa-edit" @click:append="showEditDiag = Date.now()"></v-text-field>
+                                
                                 </v-card-text>
-                                <v-card-actions>
-                                    <v-btn @click="setPublicSettings" color="primary">Update</v-btn>
-                                </v-card-actions>
                             </v-card>
                             <v-card class="ma-2">
                                 <v-card-title>Public Link</v-card-title>
                                 <v-card-text>
-                                    <v-form><v-text-field solo :value="publicUrl" readonly></v-text-field></v-form>
+                                    <v-form><v-text-field outlined :value="publicUrl" readonly></v-text-field></v-form>
                                 </v-card-text>
                             </v-card>
                             
@@ -182,6 +180,7 @@
                 </v-tab-item>
             </v-tabs-items>
 
+            <NewMatchDiag @add="updateEventId" :show="showEditDiag" message="Edit Name" button="Update" :eventId="eventId"></NewMatchDiag>
             <NewMatchDiag @add="clone" :show="showCloneDiag" message="Create new match" button="Clone" :eventId="eventId"></NewMatchDiag>
             <NewMatchDiag @add="cloneReset" :show="showResetDiag" message="Archive data to:" button="Archive" :eventId="addDate"></NewMatchDiag>
         </template>
@@ -219,11 +218,12 @@ export default {
             maps,
             showCloneDiag: false,
             showResetDiag: false,
+            showEditDiag: false,
         }
     },
     computed: {
         publicFullUrl() {
-            return window.location.origin + this.$router.resolve({ name: 'tournament', params: { organizer: this.organizer, matchSlug: this.matchId, game: "overall" } }).href;
+           return this.$apex.getMatchPageUrl(this.$router, this.organizer, this.matchId, this.eventId);
         },
         publicFullUrlDrops() {
             return window.location.origin + this.$router.resolve({ name: 'tournament.drops', params:  { organizer: this.organizer, matchSlug: this.matchId } }).href;
@@ -276,6 +276,7 @@ export default {
                 Object.keys(this.publicData.drops?.maps ?? {}).forEach(key => this.selectedMaps[key] = true);
 
                 this.publicUrlDrops = (await this.getShortLink(this.publicFullUrlDrops)) || this.publicFullUrlDrops;
+                this.publicUrl = (await this.getShortLink(this.publicFullUrl)) || this.publicFullUrl;
             }
         },
         async enableDrops() {
@@ -317,16 +318,22 @@ export default {
         async clone(eventId) {
             await this.$apex.cloneMatch(eventId, this.matchId);
             this.showCloneDiag = false;
+            this.$emit("refresh");
         },
         async cloneReset(eventId) {
             await this.$apex.cloneDataAndReset(eventId, this.matchId);
             this.showResetDiag = false;
+            this.$emit("refresh");
         },
+        async updateEventId(eventId) {
+            await this.$apex.updateEventId(this.matchId, eventId);
+            this.$emit("refresh");
+            this.showEditDiag = false;
+        }
     },
     async mounted() {
         this.publicUrl = this.publicFullUrl;
         await this.refreshPublicOptions();
-        this.publicUrl = (await this.getShortLink(this.publicFullUrl)) || this.publicFullUrl;
     }
 }
 </script>

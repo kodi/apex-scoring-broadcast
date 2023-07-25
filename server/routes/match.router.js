@@ -119,4 +119,15 @@ module.exports = function setup(app) {
         res.send({ newMatch });
     })
 
+
+    app.patch("/match", verifyOrganizerHeaders, async (req, res) => {
+        const {
+            matchId,
+            eventId,
+        } = req.body;
+
+        await matchService.updateEventId(req.organizer, matchId, eventId);
+        res.send({  });
+    })
+
 }

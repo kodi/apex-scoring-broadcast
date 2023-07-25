@@ -27,7 +27,6 @@ module.exports = function setup(app) {
 
         if (lastPoll === "OK") {
             const pollingSettings = await matchService.getMatchPolling(matchId);
-            console.log(matchId, pollingSettings, now);
 
             if (pollingSettings?.pollStart && pollingSettings.pollStart < now && pollingSettings.pollEnd > now) {
                 let stats = await apexService.getStatsFromCode(pollingSettings.statsCodes);

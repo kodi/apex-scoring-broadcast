@@ -160,11 +160,11 @@
                                                         <v-card>
                                                             <v-card-title>History</v-card-title>
                                                         <v-card-text>
-                                                            <div v-for="h in dropHistory" :key="h.id + '' + h.deletedAt" >
+                                                            <div v-for="h in dropHistory" :key="h.id + '' + h.deleted" >
                                                                 <v-tooltip bottom >
                                                                     <template v-slot:activator="{ on, attrs }">
-                                                                    <div class="history" v-bind="attrs" v-on="on" :style="{ color: stringToColour(h.deletedAt ? h.deletedBy ?? h.token : h.token) }">
-                                                                        <span><span class="time" :class='{ deleted: !!h.deletedAt }'>{{ h.deletedAt ? "-" : "+" }}</span> [{{ getDate(h.time) }} {{ getTime(h.time) }}]</span>
+                                                                    <div class="history" v-bind="attrs" v-on="on" :style="{ color: stringToColour(h.deleted ? h.deletedBy ?? h.token : h.token) }">
+                                                                        <span><span class="time" :class='{ deleted: !!h.deleted }'>{{ h.deleted ? "-" : "+" }}</span> [{{ getDate(h.time) }} {{ getTime(h.time) }}]</span>
                                                                         <span> ({{ h.teamName }}) </span>
                                                                         <span>{{ h.drop }}</span>
                                                                     </div>
@@ -317,7 +317,7 @@ export default {
             result.forEach(r => {
                 history.push({ id: r.id, token: r.token, teamName: r.teamName, time: new Date(r.createdAt), drop: r.drop });
                 if (r.deletedAt)
-                    history.push({ id: r.id, token: r.token, teamName: r.teamName, time: new Date(r.deletedAt), drop: r.drop, deletedBy: r.deletedBy });
+                    history.push({ id: r.id, token: r.token, teamName: r.teamName, time: new Date(r.deletedAt), deleted: true, drop: r.drop, deletedBy: r.deletedBy });
             });
 
             history = history.sort((a, b) => a.time - b.time);

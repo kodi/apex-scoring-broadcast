@@ -169,7 +169,7 @@
                                                                         <span>{{ h.drop }}</span>
                                                                     </div>
                                                                     </template>
-                                                                <span>Claimed By: {{ h.token }}<span v-if="h.deletedAt"><br>Deleted By: {{ h.deletedBy }}</span></span>
+                                                                <span>Claimed By: {{ h.token }}<span v-if="h.deleted"><br>Deleted By: {{ h.deletedBy }}</span></span>
                                                                 </v-tooltip>
                                                             </div>
                                                         </v-card-text>

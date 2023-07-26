@@ -163,13 +163,13 @@
                                                             <div v-for="h in dropHistory" :key="h.id + '' + h.deletedAt" >
                                                                 <v-tooltip bottom >
                                                                     <template v-slot:activator="{ on, attrs }">
-                                                                    <div class="history" v-bind="attrs" v-on="on" :style="{ color: stringToColour(h.deletedBy ? h.deletedBy : h.token) }">
-                                                                        <span><span class="time" :class='{ deleted: !!h.deletedBy }'>{{ h.deletedBy ? "-" : "+" }}</span> [{{ getDate(h.time) }} {{ getTime(h.time) }}]</span>
+                                                                    <div class="history" v-bind="attrs" v-on="on" :style="{ color: stringToColour(h.deletedAt ? h.deletedBy ?? h.token : h.token) }">
+                                                                        <span><span class="time" :class='{ deleted: !!h.deletedAt }'>{{ h.deletedAt ? "-" : "+" }}</span> [{{ getDate(h.time) }} {{ getTime(h.time) }}]</span>
                                                                         <span> ({{ h.teamName }}) </span>
                                                                         <span>{{ h.drop }}</span>
                                                                     </div>
                                                                     </template>
-                                                                <span>Claimed By: {{ h.token }}<span v-if="h.deletedBy"><br>Deleted By: {{ h.deletedBy }}</span></span>
+                                                                <span>Claimed By: {{ h.token }}<span v-if="h.deletedAt"><br>Deleted By: {{ h.deletedBy }}</span></span>
                                                                 </v-tooltip>
                                                             </div>
                                                         </v-card-text>

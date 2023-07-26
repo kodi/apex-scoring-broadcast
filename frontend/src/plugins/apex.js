@@ -21,6 +21,16 @@ function apexService(config) {
         return localStorage.getItem("organizer-key");
     }
 
+    function sanatizedEventId(eventId) {
+        if(eventId)
+            return eventId.replace(/[\W_]+/g, "_").substring(0, 30);
+    }
+
+    function getMatchPageUrl(router, organizer, matchId, eventId, page = "tournament", game = "overall") {
+        eventId = sanatizedEventId(eventId);
+        return window.location.origin + router.resolve({ name: page, params: { organizer: organizer, matchSlug: matchId + (eventId ? '.' + eventId : ""), game} }).href
+    }
+
     async function login(username, key) {
         let result = await axios.post(`${config.baseUrl}auth/organizer`, { username, key });
 
@@ -32,12 +42,12 @@ function apexService(config) {
         return stats.data;
     }
 
-    async function getStats(organizer, eventId, game) {
-        let stats = await axios.get(config.baseUrl + "stats/" + organizer + "/" + encodeURIComponent(eventId) + "/" + game);
+    async function getStats(matchId, game) {
+        let stats = await axios.get(config.baseUrl + "stats/" + matchId + "/" + game);
         return stats.data;
     }
 
-    async function exportCsv(organizer, eventId, game, type, cols, stats) {
+    async function exportCsv(game, type, cols, stats) {
         let data = {header:[], rows:[]};
         data.header = cols.map(col => col.label);
 
@@ -90,20 +100,20 @@ function apexService(config) {
         const url = URL.createObjectURL(dataBlob);
         
         const link = document.createElement('a');
-        link.setAttribute('download', organizer + "+" + eventId + "+" + game + ".csv");
+        link.setAttribute('download',  stats.matchId + "_" + game + ".csv");
         link.setAttribute('href', url);
         link.click();
     }
 
-    async function getGameList(organizer, eventId) {
-        let stats = await axios.get(config.baseUrl + "games/" + organizer + "/" + encodeURIComponent(eventId));
+    async function getGameList(matchId) {
+        let stats = await axios.get(config.baseUrl + "games/" + matchId);
         return stats.data;
     }
 
-    async function generateStats(eventId, statsCode, game, startTime, selectedUnclaimed, liveData) {
+    async function generateStats(matchId, statsCode, game, startTime, selectedUnclaimed, liveData) {
         let form = new FormData();
 
-        form.append("eventId", eventId);
+        form.append("matchId", matchId);
         form.append("statsCode", statsCode);
         form.append("game", game);
         if (startTime)
@@ -122,8 +132,8 @@ function apexService(config) {
 
     }
 
-    async function deleteStats(organizer, eventId, game) {
-        await axios.delete(config.baseUrl + "stats/" + organizer + "/" + encodeURIComponent(eventId) + "/" + game, { headers: getApiKeyHeaders() });
+    async function deleteStats(matchId, game) {
+        await axios.delete(config.baseUrl + "stats/" + matchId + "/" + game, { headers: getApiKeyHeaders() });
     }
 
     async function getBroadcastSettings(organizer) {
@@ -175,6 +185,26 @@ function apexService(config) {
         }, { headers: getApiKeyHeaders() });
     }
 
+    async function archiveMatch(matchId) {
+        await axios.post(config.baseUrl + "match/archive", {matchId}, { headers: getApiKeyHeaders() });
+    }
+
+    async function unArchiveMatch(matchId) {
+        await axios.post(config.baseUrl + "match/archive", { matchId, archive: false}, { headers: getApiKeyHeaders() });
+    }
+
+    async function cloneMatch(eventId, matchId) {
+        await axios.post(config.baseUrl + "match/clone", {matchId, eventId}, { headers: getApiKeyHeaders() });
+    }
+
+    async function cloneDataAndReset(eventId, matchId) {
+        await axios.post(config.baseUrl + "match/clone_reset", { matchId, eventId }, { headers: getApiKeyHeaders() });
+    }
+
+    async function updateEventId(matchId, eventId) {
+        await axios.patch(config.baseUrl + "match", { matchId, eventId }, { headers: getApiKeyHeaders() });
+    }
+
     async function setOrganizerDefaultApexClient(organizer, client) {
         await axios.post(config.baseUrl + "settings/default_apex_client/" + organizer, { client }, { headers: getApiKeyHeaders() });
     }
@@ -189,8 +219,13 @@ function apexService(config) {
         return data;
     }
 
-    async function getMatchList(organizer) {
-        let result = await axios.get(config.baseUrl + "settings/match_list/" + organizer, { headers: getApiKeyHeaders() });
+    async function getMatchList(organizer, archived) {
+        let result = await axios.get(config.baseUrl + "settings/match_list/" + organizer + (archived ? "?archived=true" : ""), { headers: getApiKeyHeaders() });
+        return result.data;
+    }
+
+    async function getMatchById(matchId) {
+        let result = await axios.get(config.baseUrl + "match/" + matchId);
         return result.data;
     }
 
@@ -204,8 +239,8 @@ function apexService(config) {
         return data.data;
     }
 
-    async function getLiveData(organizer, eventId, game) {
-        let data = await axios.get(`${config.baseUrl}stats/${organizer}/${encodeURIComponent(eventId)}/${game}/livedata`);
+    async function getLiveData(matchId, game) {
+        let data = await axios.get(`${config.baseUrl}stats/${matchId}/${game}/livedata`);
         return data.data;
     }
 
@@ -229,8 +264,8 @@ function apexService(config) {
         return data.data;
     }
 
-    async function createMatch(name) {
-        let { data } = await axios.post(`${config.baseUrl}match/${encodeURIComponent(name)}`, {}, { headers: getApiKeyHeaders() });
+    async function createMatch(eventId) {
+        let { data } = await axios.post(`${config.baseUrl}match`, { eventId }, { headers: getApiKeyHeaders() });
         return data;
     }
 
@@ -286,7 +321,9 @@ function apexService(config) {
 
     return {
         config,
+        
         getApiKey,
+        getMatchPageUrl,
         getStats,
         generateStats,
         getBroadcastSettings,
@@ -323,6 +360,12 @@ function apexService(config) {
         setDrop,
         getDrops,
         deleteDrop,
-        deleteDropAdmin
+        deleteDropAdmin,
+        getMatchById,
+        archiveMatch,
+        unArchiveMatch,
+        cloneMatch,
+        cloneDataAndReset,
+        updateEventId,
     }
 }

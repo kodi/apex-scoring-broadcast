@@ -5,10 +5,10 @@ config.statsUrl = process.argv[2] || config.statsUrl;
 const { verifyOrganizerHeaders, verifyAdminHeaders } = require("../middleware/auth");
 const apexService = new require("../services/apex.service")(config);
 const authService = require("../services/auth.service");
-const matchService = require("../services/match.service");
 const dropService = require("../services/drops.service");
 const broadcastService = require("../services/broadcast.service");
 const cache = require("../services/cache.service");
+const matchService = require("../services/match.service");
 const shortLinkService = require("../services/short_link.service.js");
 const wsHandlerService = require("../services/ws_handler.service.js");
 const liveService = require("../services/live.service");
@@ -17,61 +17,45 @@ const playerService = require("../services/player.service");
 const { redis } = require("../connectors/redis");
 
 const SHORT_LINK_PREFIX = "_";
-module.exports = function router(app) {
+module.exports = function setup(app) {
 
-    async function deleteCache(username, eventId, game) {
-        await cache.del(`stats:${username}-${eventId}-${game}`);
-        await cache.del(`stats:${username}-${eventId}-overall`);
-        await cache.del(`stats:${username}-${eventId}-stacked`);
-        await cache.del(`stats:${username}-${eventId}-summary`);
-        await cache.del(`stats:${username}-${eventId}-${game}-livedata-parsed`);
-    }
-
-    async function checkAutoPoll(organizer, eventId) {
-        let cacheKey = `match_polling_skip_${organizer.username}_${eventId}`;
+    async function checkAutoPoll(matchId) {
+        let cacheKey = `match_polling_skip_${matchId}`;
         let now = Date.now();
 
         let lastPoll = await redis.set(cacheKey, now, "EX", 90, "NX");
 
         if (lastPoll === "OK") {
-            const match = await matchService.getMatch(organizer.username, eventId);
-            if (!match) return;
-            console.log("Checking for new games on ", organizer.username, eventId, match.id)
-
-            const pollingSettings = await matchService.getMatchPolling(match.id);
-            console.log(organizer.username, eventId, pollingSettings, now);
+            const pollingSettings = await matchService.getMatchPolling(matchId);
 
             if (pollingSettings?.pollStart && pollingSettings.pollStart < now && pollingSettings.pollEnd > now) {
                 let stats = await apexService.getStatsFromCode(pollingSettings.statsCodes);
-                let newStats = stats.filter(stat => !pollingSettings.pollCurrent || console.log(organizer, eventId, pollingSettings.pollCurrent, stat.match_start * 1000, pollingSettings.pollCurrent < (stat.match_start * 1000) ) || pollingSettings.pollCurrent < (stat.match_start * 1000));
-                let latestGame = await statsService.getLatestedGame(match.id);
+                let newStats = stats.filter(stat => !pollingSettings.pollCurrent || console.log(matchId, pollingSettings.pollCurrent, stat.match_start * 1000, pollingSettings.pollCurrent < (stat.match_start * 1000) ) || pollingSettings.pollCurrent < (stat.match_start * 1000));
+                let latestGame = await statsService.getLatestedGame(matchId);
 
-                console.log("Found new games", newStats.map(s => s.match_start));
 
                 for (let stat of newStats) {
-                    await processStats(organizer, eventId, ++latestGame.game, stat);
+                    await processStats(matchId, ++latestGame.game, stat);
                 }
                 if(newStats.length > 0)
-                    await matchService.updateMatchPolling(match.id, now);
+                    await matchService.updateMatchPolling(matchId, now);
 
             }
         }
     }
 
-    async function getStats(organizerName, eventId, game, stacked = false) {
-        const cacheKey = `stats:${organizerName}-${eventId}-${game}`;
-        let orgId = await authService.getOrganizerId(organizerName)
+    async function getStats(matchId, game, stacked = false) {
+        const cacheKey = `stats:${matchId}-${game}`;
 
-        await checkAutoPoll({ username: organizerName, id: orgId}, eventId);
+        await checkAutoPoll(matchId);
 
         let stats = await cache.getOrSet(cacheKey, async () => {
-            let stats = await statsService.getStats(orgId, eventId, game);
+            let stats = await statsService.getStats(matchId, game);
 
             if (!stats || stats.length == 0) {
-                let match = await matchService.getMatch(organizerName, eventId);
-                if (match) {
-                    let teams = await matchService.getMatchTeams(match.id);
+                let teams = await matchService.getMatchTeams(matchId);
 
+                if(teams?.length) {
                     return {
                         teams: teams.map(t => ({ ...t, player_stats: [], overall_stats: { name: t.name } })).sort((a, b) => a.teamId - b.teamId),
                     };
@@ -95,8 +79,7 @@ module.exports = function router(app) {
         return stats;
     }
 
-    async function processStats(organizer, eventId, game, statsData, liveData) {
-        const { id: matchId } = await matchService.getMatch(organizer.username, eventId);
+    async function processStats(matchId, game, statsData, liveData) {
         const matchSettings = await matchService.getMatchSettings(matchId);
 
         const placementPoints = matchSettings?.scoring?.placementPoints;
@@ -119,8 +102,8 @@ module.exports = function router(app) {
         }
 
         gameStats = apexService.generateGameReport(gameStats, placementPoints, killPoints, ringKillPoints);
-        let gameId = await statsService.writeStats(organizer, eventId, game, gameStats, source);
-        await deleteCache(organizer.username, eventId, game);
+        let gameId = await statsService.writeStats(matchId, game, gameStats, source);
+        await cache.deleteMatchCache(matchId, game);
 
         return { gameId, ...gameStats };
     }
@@ -151,100 +134,6 @@ module.exports = function router(app) {
         res.send(organizer);
     })
 
-    app.get("/match/:organizer/:eventId", async (req, res) => {
-        let result = await matchService.getMatch(req.params.organizer, req.params.eventId);
-        res.send(result);
-    })
-
-    app.post("/settings/broadcast/:organizer", verifyOrganizerHeaders, async (req, res) => {
-        await broadcastService.setBroadcastSettings(req.organizer, req.body);
-        res.sendStatus(200);
-    })
-
-    app.get("/settings/broadcast/:organizer", async (req, res) => {
-        let result = await broadcastService.getBroadcastSettings(req.params.organizer);
-        res.send(result);
-    })
-
-    app.get("/settings/match/:matchId/teams", async (req, res) => {
-        let result = await matchService.getMatchTeams(req.params.matchId);
-        res.send(result);
-    })
-
-    app.post("/settings/match/:matchId/team", verifyOrganizerHeaders, async (req, res) => {
-        const {
-            teamId,
-            name
-        } = req.body;
-
-        let match = await matchService.getMatchById(req.params.matchId);
-        await matchService.setMatchTeam(req.params.matchId, teamId, name);
-
-        deleteCache(req.organizer.username, match.eventId, "overall");
-        res.sendStatus(200);
-    })
-
-    app.post("/settings/match/:matchId", verifyOrganizerHeaders, async (req, res) => {
-        await matchService.setMatchSettings(req.params.matchId, req.body);
-        res.sendStatus(200);
-    })
-
-    app.get("/settings/match/:matchId", async (req, res) => {
-        let result = await matchService.getMatchSettings(req.params.matchId);
-        res.send(result);
-    })
-
-    app.get("/settings/match_list/:organizer", async (req, res) => {
-        let result = await matchService.getMatchList(req.params.organizer);
-        res.send(result);
-    })
-
-    app.post("/organizer/match/:organizer/", async (req, res) => {
-        await matchService.setOrganizerMatch(req.params.organizer, req.body.match);
-        res.sendStatus(200);
-    })
-
-    app.get("/organizer/match/:organizer/", async (req, res) => {
-        let result = await matchService.getOrganizerMatch(req.params.organizer);
-        res.send(result);
-    })
-
-    app.post("/settings/default_apex_client/:organizer/", async (req, res) => {
-        await broadcastService.setOrganizerDefaultApexClient(req.params.organizer, req.body.client);
-        res.sendStatus(200);
-    })
-
-    app.get("/settings/default_apex_client/:organizer/", async (req, res) => {
-        let result = await broadcastService.getOrganizerDefaultApexClient(req.params.organizer);
-        res.send(result);
-    })
-
-    app.post("/settings/auto_poll/", verifyOrganizerHeaders, async (req, res) => {
-        const {
-            matchId,
-            pollStart,
-            pollEnd,
-            statsCodes
-        } = req.body;
-
-        try {
-            await matchService.setMatchPolling(matchId, pollStart, pollEnd, statsCodes);
-            res.sendStatus(200);
-        } catch (err) {
-            console.log(err);
-            res.send(err);
-        }
-    })
-
-    app.get("/settings/auto_poll/:matchId",verifyOrganizerHeaders,  async (req, res) => {
-        const {
-            matchId
-        } = req.params;
-
-        let result = await matchService.getMatchPolling(matchId);
-        res.send(result);
-    })
-
     app.get("/stats/code/:statsCode", verifyOrganizerHeaders, async (req, res) => {
         let stats = await apexService.getStatsFromCode(req.params.statsCode);
         stats = stats.map(stat => apexService.generateGameReport(stat));
@@ -252,13 +141,8 @@ module.exports = function router(app) {
         res.send(stats);
     })
 
-    app.post("/match/:eventId", verifyOrganizerHeaders, async (req, res) => {
-        let id = await matchService.createMatch(req.organizer, req.params.eventId);
-        res.send({ match: id });
-    })
-
     app.post("/stats", verifyOrganizerHeaders, async (req, res) => {
-        let { eventId, game, statsCode, startTime, selectedUnclaimed } = req.body;
+        let { matchId, game, statsCode, startTime, selectedUnclaimed } = req.body;
         const liveDataFile = req.files?.["liveData"];
 
         let respawnStats = undefined;
@@ -296,7 +180,7 @@ module.exports = function router(app) {
         }
 
         try {
-            let gameStats = await processStats(req.organizer, eventId, game, respawnStats, liveDataStats);
+            let gameStats = await processStats(matchId, game, respawnStats, liveDataStats);
             let gameId = gameStats.gameId;
             if (selectedUnclaimed) {
                 statsService.setLiveDataGame(selectedUnclaimed, gameId)
@@ -315,18 +199,16 @@ module.exports = function router(app) {
     })
 
 
-    app.get("/stats/:organizer/:eventId/:game/livedata", async (req, res) => {
+    app.get("/stats/:matchId/:game/livedata", async (req, res) => {
         const {
-            organizer,
-            eventId,
+            matchId,
             game
         } = req.params;
 
-        let key = `stats:${organizer}-${eventId}-${game}-livedata-parsed`;
+        let key = `stats:${matchId}-${game}-livedata-parsed`;
         try {
             let data = await cache.getOrSet(key, async () => {
-                let orgId = await authService.getOrganizerId(organizer)
-                let gameId = await statsService.hasLiveData(orgId, eventId, game);
+                let gameId = await statsService.hasLiveData(matchId, game);
 
                 if (!gameId) {
                     return { err: "err_no_data", msg: "This game doesn't have any live data attached" }
@@ -348,24 +230,20 @@ module.exports = function router(app) {
         res.send(await statsService.getUnclaimedLiveData(req.organizer.id));
     })
 
-    app.get("/games/:organizer/:eventId", async (req, res) => {
+    app.get("/games/:matchId", async (req, res) => {
         const {
-            organizer,
-            eventId,
+            matchId
         } = req.params;
-        let orgId = await authService.getOrganizerId(organizer)
-
-        let result = await statsService.getGameList(orgId, eventId);
+        let result = await statsService.getGameList(matchId);
         res.send(result);
     })
 
 
-    app.get("/stats/:organizer/:eventId/summary", async (req, res) => {
+    app.get("/stats/:matchId/summary", async (req, res) => {
         const {
-            organizer,
-            eventId,
+            matchId
         } = req.params;
-        let stats = await getStats(organizer, eventId, "overall");
+        let stats = await getStats(matchId, "overall");
         let body = "";
         if (stats.teams) {
             let message = stats.teams.map(team => `${team.name} ${team.overall_stats.score}`)
@@ -373,55 +251,51 @@ module.exports = function router(app) {
         }
         let message =  `${body} -- (after ${stats.total} games)`;
 
-        let match = await matchService.getMatch(organizer, eventId);
+        let match = await matchService.getMatchById(matchId);
         let settings = await matchService.getMatchSettings(match.id);
-        let title = (settings && settings.title) || `${organizer} - ${eventId}`;
+        let title = (settings && settings.title) || `${match.eventId}`;
 
         res.send(`--- ${title} --- ${message}`);
     })
 
-    app.get("/stats/:organizer/:eventId/stacked", async (req, res) => {
+    app.get("/stats/:matchId/stacked", async (req, res) => {
         const {
-            organizer,
-            eventId,
+            matchId,
         } = req.params;
-        let stats = await getStats(organizer, eventId, "overall", true);
+        let stats = await getStats(matchId, "overall", true);
 
         res.send(stats);
     })
 
-    app.get("/stats/:organizer/:eventId/:game", async (req, res) => {
+    app.get("/stats/:matchId/:game", async (req, res) => {
         const {
-            organizer,
-            eventId,
+            matchId,
             game
         } = req.params;
-        let stats = await getStats(organizer, eventId, game);
+        let stats = await getStats(matchId, game);
         
         res.send(stats);
     })
 
-    app.get("/stats/:organizer/:eventId/:game/csv", async (req, res) => {
+    app.get("/stats/:matchId/:game/csv", async (req, res) => {
         const {
-            organizer,
-            eventId,
+            matchId,
             game
         } = req.params;
-        let stats = await getStats(organizer, eventId, game);
+        let stats = await getStats(matchId, game);
         let csv = statsToCsv(stats, req.query.team, req.query.full);
 
-        res.attachment(`${organizer}+${eventId}+${game}.csv`).send(csv)
+        res.attachment(`${matchId}+${game}.csv`).send(csv)
     });
 
-    app.delete("/stats/:organizer/:eventId/:game", verifyOrganizerHeaders, async (req, res) => {
+    app.delete("/stats/:matchId/:game", verifyOrganizerHeaders, async (req, res) => {
         const {
-            organizer,
-            eventId,
+            matchId,
             game
         } = req.params;
 
-        await statsService.deleteStats(req.organizer.id, eventId, game);
-        await deleteCache(organizer, eventId, game);
+        await statsService.deleteStats(matchId, game);
+        await cache.deleteMatchCache(matchId, game);
 
         res.sendStatus(200);
     })
@@ -435,7 +309,7 @@ module.exports = function router(app) {
 
         await statsService.editScore(gameId, teamId, score);
         let game = await statsService.getGame(gameId);
-        await deleteCache(req.organizer.username, game.eventId, game.game)
+        await cache.deleteMatchCache(game.matchId, game.game)
         res.sendStatus(200);
     })
 
@@ -449,13 +323,14 @@ module.exports = function router(app) {
 
         let matches = await statsService.getLatest();
         let settings = await Promise.all(matches.map(async match => matchService.getMatchSettings(match.matchId)));
-        matches = matches.slice(0, 8);
+        matches = matches.slice(0, 12);
         if (matches) {
             let stats = matches.map((match, id) => {
                 return {
                     id: match.id,
                     organizer: match.username,
                     eventId: match.eventId,
+                    matchId: match.matchId,
                     title: (settings[id] || {}).title,
                     top3: apexService.generateOverallStats(match.stats).slice(0, 3).map(team => team.overall_stats)
                 }
@@ -557,6 +432,10 @@ module.exports = function router(app) {
             token,
         } = req.params;
 
+        if (isNaN(matchId) || !map) {
+            return res.send({});
+        }
+
         let result = token? await dropService.getMatchDropsByToken(matchId, map, token) : await dropService.getMatchDrops(matchId, map);
         res.send(result);
     })
@@ -584,7 +463,7 @@ module.exports = function router(app) {
         res.sendStatus(200);
     });
 
-    app.ws("/", (ws, req) => {
+    app.ws("/", (ws) => {
         ws.on("message", (msg) => console.log(msg));
     })
 

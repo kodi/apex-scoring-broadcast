@@ -23,10 +23,10 @@ export default {
         }
     },
     components: { FeedCard },
-    props: ["organizer", "eventId", "game"],
+    props: ["matchId", "game"],
     methods: {
         async getLiveData() {
-            this.liveData = await this.$apex.getLiveData(this.organizer, this.eventId, this.game);
+            this.liveData = await this.$apex.getLiveData(this.matchId, this.game);
         }
     },
     watch: {

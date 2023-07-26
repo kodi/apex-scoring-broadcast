@@ -50,7 +50,7 @@
 import { getMapNameShort } from '../../utils/statsUtils';
 
 export default {
-    props: ["organizer", "eventId", "game"],
+    props: ["matchId", "game"],
 
     data() {
         return {
@@ -60,10 +60,10 @@ export default {
     methods: {
         getMapNameShort,
         async updateStats() {
-            this.stats = await this.$apex.getStats(this.organizer, this.eventId, "overall");
+            this.stats = await this.$apex.getStats(this.matchId, "overall");
         },
         setGame(game) {
-            this.$router.replace({ params: { game, organizer: this.organizer, eventId: this.eventId } });
+            this.$router.replace({ params: { game } });
         },
         getDate(timestamp) {
             return Intl.DateTimeFormat(navigator.language, { month: 'short', day: 'numeric', year: "numeric" }).format(new Date(timestamp))

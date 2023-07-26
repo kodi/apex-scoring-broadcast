@@ -5,12 +5,16 @@ function getCacheKey(value, option) {
     return `MATCH-SETTING:${value}-${option}`;
 }
 
+async function resetMatchListCache(organizer) {
+    await cache.del(getCacheKey(organizer.username, "match_list_" + true))
+    await cache.del(getCacheKey(organizer.username, "match_list_" + false))
+}
+
 async function getOrganizerMatch(organizerName) {
     return await cache.getOrSet(getCacheKey(organizerName, "selected_match"), async () => {
         return await db("organizers")
-            .join("match", "match.id", "organizers.selected_match")
             .where({ username: organizerName })
-            .first(["match.id as id", "match.eventId"])
+            .first(["selected_match as matchId"])
     }, 300);
 }
 
@@ -22,21 +26,26 @@ async function setOrganizerMatch(organizerName, match) {
     cache.del(getCacheKey(organizerName, "selected_match"));
 }
 
-async function getMatchList(organizerName) {
-    return await cache.getOrSet(getCacheKey(organizerName, "match_list"), async () => {
-        let result = await db("match")
+async function getMatchList(organizerName, archived = false) {
+    return await cache.getOrSet(getCacheKey(organizerName, "match_list_" + archived), async () => {
+        let query = db("match")
             .join("organizers", "organizers.id", "match.organizer")
-            .where({ username: organizerName })
-            .orderBy("match.id", "desc")
-            .select(["match.id as id", "eventId"]);
-        return result;
+            .where({ username: organizerName });
+            
+        if (!archived)
+            query.andWhere("archived", '<>', true)
+
+        let result = query.orderBy("match.id", "desc")
+            .select(["match.id as id", "eventId", "archived"]);
+        
+        return await result;
     }, 300)
 }
 
 async function createMatch(organizer, eventId) {
     let id = await db("match").insert({ organizer: organizer.id, eventId }, ["id"]);
     await setOrganizerMatch(organizer.username, id[0].id);
-    await cache.del(getCacheKey(organizer.username, "match_list"));
+    await resetMatchListCache(organizer);
     return id[0].id;
 }
 
@@ -90,7 +99,10 @@ async function getMatch(organizerName, eventId) {
 }
 
 async function getMatchById(id) {
-    return await db("match").where({ id }).first();
+    return await db("match")
+        .join("organizers", "organizers.id", "match.organizer")
+        .where({ "match.id" : id })
+        .first(["match.id as id", "eventId", "organizers.id as organizer", "username as organizerName"]);
 }
 
 async function setMatchPolling(matchId, pollStart, pollEnd, statsCodes) {
@@ -116,6 +128,50 @@ async function getMatchPolling(matchId) {
     }, 300);
 }
 
+async function archiveMatch(organizer, matchId, archived = true) {
+    await db("match")
+        .where({ id: matchId })
+        .update({ archived });
+    let selected = await getOrganizerMatch(organizer.username);
+
+    console.log(selected, matchId);
+    if (selected == matchId) {
+        await setOrganizerMatch(organizer.username, null);
+    }
+    await resetMatchListCache(organizer);
+}
+
+async function cloneMatch(organizer, eventId, matchId) {
+    let newMatch = await createMatch(organizer, eventId);
+    let settings = await getMatchSettings(matchId);
+    await setMatchSettings(newMatch, settings);
+
+    let teams = await getMatchTeams(matchId);
+    teams.forEach(team => setMatchTeam(newMatch, team.teamId, team.name));
+    return newMatch;
+}
+
+async function cloneDataAndReset(organizer, eventId, matchId) {
+    let newMatch = await cloneMatch(organizer, eventId, matchId);
+
+    await db.transaction(async trx => {
+        await trx("game").where({ matchId }).update({ matchId: newMatch });
+        await trx("drops").where({ matchId }).update({ matchId: newMatch });
+        await trx("player_game_stats").where({ matchId }).update({ matchId: newMatch });
+        await trx("team_game_stats").where({ matchId }).update({ matchId: newMatch });
+    });
+
+    console.log("neMatch", newMatch);
+
+    await archiveMatch(organizer, newMatch);
+}
+
+async function updateEventId(organizer, matchId, eventId) {
+    await db("match").update({ eventId }).where({ id: matchId });
+    await resetMatchListCache(organizer);
+
+}
+
 module.exports = {
     getMatchSettings,
     setMatchSettings,
@@ -130,4 +186,8 @@ module.exports = {
     setMatchPolling,
     updateMatchPolling,
     getMatchPolling,
+    archiveMatch,
+    cloneMatch,
+    cloneDataAndReset,
+    updateEventId
 }

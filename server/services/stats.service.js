@@ -19,8 +19,8 @@ function assembleStatsDocuments(games, teams, players, matchTeams) {
     return games.sort((a, b) => a.id - b.id);
 }
 
-async function getStats(organizer, eventId, game) {
-    let where = game == "overall" ? { organizer, eventId } : { organizer, eventId, game };
+async function getStats(matchId, game) {
+    let where = game == "overall" ? { matchId } : { matchId, game };
     try {
         let games = await db("game")
             .where(where)
@@ -40,11 +40,11 @@ async function getStats(organizer, eventId, game) {
     }
 }
 
-async function deleteStats(organizer, eventId, game) {
+async function deleteStats(matchId, game) {
     try {
         await db.transaction(async trx => {
             let previousGame = await trx("game").
-                where({ organizer, eventId, game })
+                where({ matchId, game })
                 .first("id");
 
             if (previousGame) {
@@ -68,29 +68,15 @@ async function deleteStats(organizer, eventId, game) {
     }
 }
 
-async function writeStats(organizer, eventId, game, data, source) {
+async function writeStats(matchId, game, data, source) {
     try {
         let gameId = undefined;
         await db.transaction(async trx => {
-            console.log({ organizer, eventId, game })
-            await deleteStats(organizer.id, eventId, game);
-
-            let matchId = await trx("match").where({
-                organizer: organizer.id, eventId
-            }).first("id");
-
-            if (!matchId) {
-                matchId = await matchService.createMatch(organizer, eventId);
-            }
-
-            matchId = matchId.id;
-
+            await deleteStats(matchId, game);
 
             let gameResult = await trx("game").insert({
-                eventId,
                 game,
                 matchId,
-                organizer: organizer.id,
                 match_start: data.match_start,
                 mid: data.mid,
                 map_name: data.map_name,
@@ -153,11 +139,11 @@ async function getGame(gameId) {
     return db("game").first("*").where({ id: gameId });
 }
 
-async function getGameList(organizer, eventId) {
+async function getGameList(matchId) {
     try {
         let result = await db("game")
             .orderBy("game", "asc")
-            .where({ organizer, eventId })
+            .where({ matchId })
             .select("*");
         return result;
     } catch (err) {
@@ -176,7 +162,7 @@ async function getLatest() {
 
         if (matches) {
             let stats = await Promise.all(matches.map(match => new Promise(async (res) => {
-                let stats = await getStats(match.organizerId, match.eventId, "overall");
+                let stats = await getStats(match.matchId, "overall");
                 res({ ...match, stats })
             })));
             return stats.filter(match => match.stats.length > 0);
@@ -200,9 +186,9 @@ async function setLiveDataGame(liveId, gameId) {
     await db("livedata").update({ gameId }).where({ id: liveId });
 }
 
-async function hasLiveData(organizer, eventId, game) {
+async function hasLiveData(matchId, game) {
     if (!isNaN(game)) {
-        let result = await db("game").first("*").where({ organizer, eventId, game });
+        let result = await db("game").first("*").where({ matchId, game });
         if (result && result.source.includes("livedata")) {
             return result.id;
         }

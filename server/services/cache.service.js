@@ -38,10 +38,18 @@ async function del(key) {
     return await redis.del(PREFIX + key);
 }
 
+async function deleteMatchCache(matchId, game) {
+    await del(`stats:${matchId}-${game}`);
+    await del(`stats:${matchId}-overall`);
+    await del(`stats:${matchId}-stacked`);
+    await del(`stats:${matchId}-summary`);
+    await del(`stats:${matchId}-${game}-livedata-parsed`);
+}
 
 module.exports = {
     put,
     get,
     del,
-    getOrSet
+    getOrSet,
+    deleteMatchCache
 }

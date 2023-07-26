@@ -9,9 +9,7 @@
                 <v-col md="1" cols="4" class="text-right">Score</v-col>
             </v-row>
         </div>
-        <router-link :to="{
-            name: 'tournament', params: { eventId: match.eventId, organizer: match.organizerName }
-        }" v-for="match in matches.data" :key="match.matchId">
+        <MatchLink :matchId="match.matchId" :eventId="match.eventId" :organizer="match.organizerName" v-for="match in matches.data" :key="match.matchId">
             <div class="list-item ma-1 white--text">
                 <v-row no-gutters>
                     <v-col md="5" cols="12">{{ getName(match) }} - {{ match.organizerName }}</v-col>
@@ -20,7 +18,7 @@
                     <v-col md="1" cols="4" class="text-right">{{ match.score }}</v-col>
                 </v-row>
             </div>
-        </router-link>
+        </MatchLink>
 
         <Pagnation v-model="start" :count="count" :total="matches.total"></Pagnation>
 </div>
@@ -28,9 +26,12 @@
 
 <script>
 import Pagnation from '@/components/Pagnation.vue';
+import MatchLink from "@/components/MatchLink.vue"
+
 export default {
     components: {
-        Pagnation
+        Pagnation,
+        MatchLink,
     },
     props: ["player", "playerId"],
     data() {

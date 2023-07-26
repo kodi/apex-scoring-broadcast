@@ -23,7 +23,7 @@
 <script>
 
 export default {
-    props: ["organizer", "eventId"],
+    props: ["matchId"],
 
     data() {
         return {
@@ -33,7 +33,7 @@ export default {
     },
     methods: {
         async updateStats() {
-            this.stats = await this.$apex.getStats(this.organizer, this.eventId, "stacked");
+            this.stats = await this.$apex.getStats(this.matchId, "stacked");
         },
         getDate(timestamp) {
             return Intl.DateTimeFormat(navigator.language, { month: 'short', day: 'numeric', year: "numeric" }).format(new Date(timestamp))

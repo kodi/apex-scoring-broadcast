@@ -73,7 +73,7 @@ const routes = [
     ]
   },
   {
-    path: "/tournament/:organizer/:eventId/",
+    path: "/tournament/:organizer/:matchSlug/",
     name: "tournament",
     component: Tournament,
     props: true,

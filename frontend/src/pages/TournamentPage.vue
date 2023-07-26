@@ -18,7 +18,7 @@
                         </div>
                     </div>
                     <div class="content-wrap">
-                        <router-view :match="match" :settings="publicSettings"/>
+                        <router-view :matchId="matchId" :match="match" :settings="publicSettings"/>
                     </div>
                 </div>
 
@@ -33,7 +33,7 @@
 <script>
 import NavBar from "@/components/NavBar"
 export default {
-    props: ["organizer", "eventId"],
+    props: ["matchSlug"],
     components: {
         NavBar
     },
@@ -41,25 +41,33 @@ export default {
         return {
             publicSettings: {},
             match: {},
+            eventId: undefined,
+            organizer: undefined,
         }
     },
     methods: {
         async refreshPublicOptions() {
-            if (this.eventId) {
-                this.match = await this.$apex.getMatch(this.organizer, this.eventId);
-                let options = await this.$apex.getPublicSettings(this.match.id);
-                if (options) {
-                    this.publicSettings = options;
-                }
+            this.match = await this.$apex.getMatchById(this.matchId);
+
+            this.eventId = this.match.eventId;
+            this.organizer = this.match.organizer;
+
+            let options = await this.$apex.getPublicSettings(this.matchId);
+            if (options) {
+                this.publicSettings = options;
             }
         }
     },
     computed: {
         title() {
-            return this.publicSettings.title || this.organizer + " - " + this.eventId
+            return this.publicSettings.title || this.match.organizerName + " - " + this.match.eventId
+        },
+        matchId() {
+            return this.matchSlug.split(".")[0];
         }
     },
     async mounted() {
+        
         await this.refreshPublicOptions();
     }
 }

@@ -27,38 +27,26 @@
                 <h3>Match Settings</h3>
                 <v-select class="ma-2" outlined :items="matchList" v-model="selectedEvent" dense
                   append-outer-icon="mdi-plus" @change="updateEvent" hide-details label="Selected Match"
-                  @click:append-outer="newMatchId = ''; newMatchName = ''; newMatchDiag = true"></v-select>
+                  @click:append-outer="showNewMatch = Date.now()"></v-select>
                 <admin-menu-item id="GameTab" v-model="selectedTab">Game Manager</admin-menu-item>
                 <admin-menu-item id="SettingsTab" v-model="selectedTab">Settings</admin-menu-item>
                 <h3>Broadcast</h3>
                 <admin-menu-item id="BroadcastTab" v-model="selectedTab">Broadcast Control</admin-menu-item>
                 <h3>Observers</h3>
                 <admin-menu-item id="ObserverClientTab" v-model="selectedTab">Apex Clients</admin-menu-item>
-                <v-divider></v-divider>
+                <h3>Account</h3>
+                <admin-menu-item id="AccountTab" v-model="selectedTab">Match Manager</admin-menu-item>
                 <admin-menu-item id="Logout" @input="loggedIn = false">Logout {{ organizer }}</admin-menu-item>
 
               </v-col>
               <v-col sm="10" cols="12">
-                <component :is="selectedTab" :organizer="organizer" :eventId="eventId" :matchId="matchId"></component>
+                <component :is="selectedTab" :organizer="organizer" :eventId="eventId" :matchId="matchId" @refresh="login"></component>
               </v-col>
             </v-row>
           </template>
         </div>
       </div>
-      <v-dialog v-model="newMatchDiag" max-width="600px">
-        <v-card>
-          <v-toolbar class="toolbar" flat>Create new match<v-spacer></v-spacer><icon-btn-filled icon="close"
-              @click="newMatchDiag = false"></icon-btn-filled></v-toolbar>
-          <v-card-text>
-            <v-text-field label="Match ID" v-model="newMatchId"></v-text-field>
-            <v-btn @click="addRandom()">+ Random</v-btn><v-btn @click="addDate" class="mx-2">+ Date</v-btn><v-btn @click="addTime">+ Time</v-btn>
-            <!-- <v-text-field label="Display Name (optional)" v-model="newMatchName"></v-text-field> -->
-
-            <v-btn color="primary" block :disabled="this.newMatchId.length == 0" class="my-3"
-              @click="newMatch()">Add</v-btn>
-          </v-card-text>
-        </v-card>
-      </v-dialog>
+      <NewMatchDiag @add="newMatch" :show="showNewMatch" message="Create new match" button="Create"></NewMatchDiag>
     </v-app>
   </div>
 </template>
@@ -69,11 +57,11 @@ import GameTab from "../views/admin/GameTab.vue"
 import BroadcastTab from "../views/admin/BroadcastTab.vue"
 import SettingsTab from "../views/admin/SettingsTab.vue"
 import ObserverClientTab from "../views/admin/ObserverClientTab.vue"
+import AccountTab from "../views/admin/AccountTab.vue"
 import NavBar from "../components/NavBar.vue"
 import AdminMenuItem from "../components/AdminMenuItem.vue"
 import IconBtnFilled from "../components/IconBtnFilled.vue"
-
-const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+import NewMatchDiag from "../components/NewMatchDiag.vue"
 
 export default {
   components: {
@@ -81,9 +69,11 @@ export default {
     GameTab,
     SettingsTab,
     ObserverClientTab,
+    AccountTab,
     NavBar,
     AdminMenuItem,
-    IconBtnFilled
+    IconBtnFilled,
+    NewMatchDiag
   },
   data() {
     return {
@@ -96,7 +86,7 @@ export default {
       loggedIn: false,
       organizer: undefined,
       selectedTab: "GameTab",
-      newMatchDiag: false,
+      showNewMatch: 0,
       newMatchId: "",
       newMatchName: undefined,
     };
@@ -128,32 +118,9 @@ export default {
         setTimeout(() => this.loginFailed = false, 3000);
       }
     },
-    generateRandomString() {
-      let randomString = '';
-
-      for (let i = 0; i < 8; i++) {
-        randomString += characters[Math.floor(Math.random() * characters.length)];
-      }
-
-      return randomString;
-    },
-    addDate() {
-      let date = new Date();
-      this.newMatchId = this.append(this.newMatchId, `${date.getMonth() + 1}-${date.getDay() + 1}-${date.getFullYear()}`)
-    },
-    addTime() {
-      let date = new Date();
-      this.newMatchId = this.append(this.newMatchId, `${ date.getHours() }:${ date.getMinutes() < 10 ? "0" + date.getMinutes(): date.getMinutes()}`)
-    },
-    addRandom() {
-      this.newMatchId = this.append(this.newMatchId, this.generateRandomString());
-    },
-    append(str, text) {
-      return str + (str.length > 0 ? " " : "") + text;
-    },
-    async newMatch() {
-      await this.$apex.createMatch(this.newMatchId.replaceAll("/", "-"), this.newMatchName);
-      this.newMatchDiag = false;
+    async newMatch(newMatchId) {
+      await this.$apex.createMatch(newMatchId);
+      this.showNewMatch = false;
       this.login();
     },
     async updateEvent(i) {
@@ -180,7 +147,4 @@ export default {
   margin: 20px;
 }
 
-.toolbar.v-sheet.v-toolbar {
-  background-color: $primary !important;
-}
 </style>

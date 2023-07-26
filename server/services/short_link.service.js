@@ -18,7 +18,6 @@ function getCacheKey(hash) {
 }
 
 async function getHash(url) {
-    console.log(url);
     let hash = await cache.get(getCacheKey(url));
 
     if (!hash) {

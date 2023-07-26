@@ -5,7 +5,6 @@ config.statsUrl = process.argv[2] || config.statsUrl;
 const { verifyOrganizerHeaders, verifyAdminHeaders } = require("../middleware/auth");
 const apexService = new require("../services/apex.service")(config);
 const authService = require("../services/auth.service");
-const dropService = require("../services/drops.service");
 const broadcastService = require("../services/broadcast.service");
 const cache = require("../services/cache.service");
 const matchService = require("../services/match.service");
@@ -379,65 +378,6 @@ module.exports = function setup(app) {
 
     app.get("/player/:id/matches", async (req, res) => {
         res.send(await playerService.getMatches(req.params.id, req.query.start, req.query.count));
-    })
-
-    app.post("/drop", async (req, res) => {
-        const {
-            matchId, 
-            teamName, 
-            token, 
-            map,
-            pass, 
-            color,
-            drop
-        } = req.body;
-
-        console.log(req.body);
-
-        let result = await dropService.setDrop(matchId, pass, map, token, teamName, color, drop);
-        if (result.err) {
-            res.status(400).send(result);
-        } else {
-            res.send(result);
-        }
-    })
-
-    app.delete("/drop/:matchId/:map/:token/:drop?", async (req, res) => {
-        const {
-            matchId,
-            token,
-            map,
-            drop,
-        } = req.params;
-
-        let result = await dropService.deleteDrop(matchId, map, token, drop);
-        res.send(result);
-    })
-
-    app.delete("/drop_delete_admin/:matchId/:map/:teamName?", verifyOrganizerHeaders, async (req, res) => {
-        const {
-            matchId,
-            map,
-            teamName,
-        } = req.params;
-
-        let result = await dropService.deleteDropsAdmin(matchId, map, teamName);
-        res.send(result);
-    })
-
-    app.get("/drops/:matchId/:map/:token?", async (req, res) => {
-        const {
-            matchId,
-            map,
-            token,
-        } = req.params;
-
-        if (isNaN(matchId) || !map) {
-            return res.send({});
-        }
-
-        let result = token? await dropService.getMatchDropsByToken(matchId, map, token) : await dropService.getMatchDrops(matchId, map);
-        res.send(result);
     })
   
     app.ws("/live/write/:key/:client", (ws, req) => {

@@ -294,6 +294,10 @@ function apexService(config) {
         return data;
     }
 
+    async function getDropsHistory(matchId, map) {
+        let { data } = await axios.get(`${config.baseUrl}drops_history/${matchId}/${map}`);
+        return data;
+    }
 
     let connections = {};
     function getLiveDataWs(organizer, client) {
@@ -361,6 +365,7 @@ function apexService(config) {
         getDrops,
         deleteDrop,
         deleteDropAdmin,
+        getDropsHistory,
         getMatchById,
         archiveMatch,
         unArchiveMatch,

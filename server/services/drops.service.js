@@ -24,26 +24,30 @@ async function setDrop(matchId, pass, map, token, teamName, color, drop) {
 async function deleteDrop(matchId, map, token, drop) {
     console.log("deleting normal", matchId, map, token, drop, drop == undefined, drop === "undefined")
     if (drop) {
-        await db("drops").update({ "deletedAt": db.fn.now(6) }).where({ matchId, map, token, drop });
+        await db("drops").update({ "deletedAt": db.fn.now(6), deletedBy: token }).where({ matchId, map, token, drop });
     } else {
-        await db("drops").update({ "deletedAt": db.fn.now(6) }).where({ matchId, map, token });
+        await db("drops").update({ "deletedAt": db.fn.now(6), deletedBy: token }).where({ matchId, map, token });
     }
 }
 
-async function deleteDropsAdmin(matchId, map, teamName) {
+async function deleteDropsAdmin(organizerName, matchId, map, teamName) {
     console.log("deleting admin", matchId, map, "'" + teamName + "'");
     if (teamName) {
-        await db("drops").update({ "deletedAt": db.fn.now(6) }).where({ matchId, map, teamName });
+        await db("drops").update({ "deletedAt": db.fn.now(6), deletedBy: organizerName }).where({ matchId, map, teamName }).whereNull("deletedAt");
     } else {
-        await db("drops").update({ "deletedAt": db.fn.now(6) }).where({ matchId, map });
+        await db("drops").update({ "deletedAt": db.fn.now(6), deletedBy: organizerName }).where({ matchId, map }).whereNull("deletedAt");
     }
 }
-
 
 async function getMatchDrops(matchId, map) {
     let drops = await db("drops").select(['teamName','map', 'color', 'drop']).where({ matchId, map }).whereNull("deletedAt");
 
     drops = _.groupBy(drops, "teamName")
+    return drops;
+}
+
+async function getMatchDropsHistory(matchId, map) {
+    let drops = db("drops").select("*").where({ matchId, map });
     return drops;
 }
 
@@ -59,4 +63,5 @@ module.exports = {
     deleteDrop,
     getMatchDropsByToken,
     deleteDropsAdmin,
+    getMatchDropsHistory,
 }

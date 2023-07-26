@@ -151,7 +151,32 @@
                                         </v-tabs>
                                         <v-tabs-items v-model="dropTab">
                                             <v-tab-item v-for="id in publicData.drops.maps" :key="id">
-                                                <DropMap class="drop-map" :map="id" :matchId="matchId" mode="admin"></DropMap>
+                                                <v-row>
+                                                   
+                                                    <v-col cols="12" md="8">
+                                                        <DropMap @map-refreshed="refreshDropHistory" class="drop-map" :map="id" :matchId="matchId" mode="admin" :organizer="organizer"></DropMap>
+                                                    </v-col>
+                                                    <v-col cols="12" md="4">
+                                                        <v-card>
+                                                            <v-card-title>History</v-card-title>
+                                                        <v-card-text>
+                                                            <div v-for="h in dropHistory" :key="h.id + '' + h.deletedAt" >
+                                                                <v-tooltip bottom >
+                                                                    <template v-slot:activator="{ on, attrs }">
+                                                                    <div class="history" v-bind="attrs" v-on="on" :style="{ color: stringToColour(h.deletedBy ? h.deletedBy : h.token) }">
+                                                                        <span><span class="time" :class='{ deleted: !!h.deletedBy }'>{{ h.deletedBy ? "-" : "+" }}</span> [{{ getDate(h.time) }} {{ getTime(h.time) }}]</span>
+                                                                        <span> ({{ h.teamName }}) </span>
+                                                                        <span>{{ h.drop }}</span>
+                                                                    </div>
+                                                                    </template>
+                                                                <span>Claimed By: {{ h.token }}<span v-if="h.deletedBy"><br>Deleted By: {{ h.deletedBy }}</span></span>
+                                                                </v-tooltip>
+                                                            </div>
+                                                        </v-card-text>
+                                                        </v-card>
+                                                       
+                                                    </v-col>
+                                                </v-row>
                                             </v-tab-item>
                                         </v-tabs-items>
                                     </v-card-text>
@@ -191,13 +216,16 @@
 import _ from "lodash";
 import { getMapName, getMapNameShort } from "@/utils/statsUtils";
 import IconBtnFilled from "@/components/IconBtnFilled";
+import IconSpan from "@/components/IconSpan";
 import DropMap from "../../components/DropMap.vue";
 import { maps } from "@/utils/maps";
 import NewMatchDiag from "../../components/NewMatchDiag.vue";
+
 export default {
     props: ["eventId", "organizer", "matchId"],
     components: {
         IconBtnFilled,
+        IconSpan,
         DropMap,
         NewMatchDiag,
     },
@@ -219,6 +247,7 @@ export default {
             showCloneDiag: false,
             showResetDiag: false,
             showEditDiag: false,
+            dropHistory: [],
         }
     },
     computed: {
@@ -248,6 +277,9 @@ export default {
     watch: {
         eventId() {
             this.refreshPublicOptions();
+        },
+        dropTab() {
+            this.refreshDropHistory();
         }
     },
     methods: {
@@ -279,6 +311,19 @@ export default {
                 this.publicUrl = (await this.getShortLink(this.publicFullUrl)) || this.publicFullUrl;
             }
         },
+        async refreshDropHistory() {
+            let result = await this.$apex.getDropsHistory(this.matchId, Object.values(this.publicData.drops.maps)[this.dropTab]);
+            let history = [];
+            result.forEach(r => {
+                history.push({ id: r.id, token: r.token, teamName: r.teamName, time: new Date(r.createdAt), drop: r.drop });
+                if (r.deletedAt)
+                    history.push({ id: r.id, token: r.token, teamName: r.teamName, time: new Date(r.deletedAt), drop: r.drop, deletedBy: r.deletedBy });
+            });
+
+            history = history.sort((a, b) => a.time - b.time);
+
+            this.dropHistory = history;
+        },
         async enableDrops() {
             let enabledMaps = {};
             Object.keys(this.selectedMaps).filter(key => this.selectedMaps[key]).forEach(key => enabledMaps[key] = maps[key]);
@@ -298,6 +343,12 @@ export default {
             for (let i = 0; i < 20; i++) {
                 await this.addTeam();
             }
+        },
+        getDate(timestamp) {
+            return Intl.DateTimeFormat(navigator.language, { month: 'numeric', day: 'numeric', year: "2-digit" }).format(timestamp)
+        },
+        getTime(timestamp) {
+            return Intl.DateTimeFormat(navigator.language, { hour: "numeric", minute: "numeric", hour12: true }).format(timestamp);
         },
         async addTeam() {
             let team = {
@@ -329,6 +380,18 @@ export default {
             await this.$apex.updateEventId(this.matchId, eventId);
             this.$emit("refresh");
             this.showEditDiag = false;
+        },
+        stringToColour (str) {
+            var hash = 0;
+            for (var i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            var colour = '#';
+            for (i = 0; i < 3; i++) {
+                var value = (hash >> (i * 8)) & 0xFF;
+                colour += ('00' + value.toString(16)).substr(-2);
+            }
+            return colour;
         }
     },
     async mounted() {
@@ -367,8 +430,22 @@ export default {
 }
 
 .drop-map {
-    width: 80%;
     max-width: 1000px;
     margin: auto;
+}
+
+.history {
+    font-family: monospace;
+
+    td {
+        padding: 0px 3px;
+    }
+    .time {
+        color: green;
+    }
+
+    .deleted {
+        color: red;
+    }
 }
 </style>

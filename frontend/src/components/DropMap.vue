@@ -36,8 +36,11 @@
                 <v-btn v-if="claiming" color="secondary" class="mt-2" @click="claiming = undefined;refreshClaims()">Cancel</v-btn>
                 </template>
             </div>
-
-        <div class="map-wrap mt-4">
+        <div class="count text-center ma-4" v-if="mode != 'display'">
+            Total Teams: {{ teamCount }} 
+            <span>Unclaimed: {{ unclaimedPrimary }}</span>
+        </div>
+        <div class="map-wrap">
             <svg viewBox="0 0 2048 2048" width="100%" xmlns:xlink="http://www.w3.org/1999/xlink" ref="svg" id="svg" @click="handleClick">
                 <image v-if="!hideMap" width="2048" height="2048" :href="`/maps/${map}.webp`" />
                 <svg:style type="text/css">
@@ -225,6 +228,7 @@ export default {
             console,
             wrongPassSnack: false,
             selfDrops: undefined,
+            drops: [],
             enabled: false,
             downloading: false,
             swatches: [Object.values(colors).slice(0, 5), Object.values(colors).slice(5, 10), Object.values(colors).slice(10, 15), Object.values(colors).slice(15, 20)]
@@ -251,7 +255,13 @@ export default {
                 result = result?.reduce((val, cur) => PolyBool.union(val, cur), result[0]);
             return result
         },
-        
+        teamCount() {
+            return Object.keys(this.drops).length;
+        },
+        unclaimedPrimary() {
+            let claimed = Object.values(this.drops).flat().map(d => d.drop);
+            return this.locations.filter(l => l.primary && !claimed.includes(l.name)).length;
+        }
     },
     watch: {
         map() {
@@ -355,7 +365,7 @@ export default {
             
             for (let claim of this.claiming) {
                 try {
-                    let result = await this.$apex.setDrop(this.matchId, this.teamName, this.map, this.pass, token, this.teamColor, claim.name);
+                    let result = await this.$apex.setDrop(this.matchId, this.teamName, this.map, this.pass, this.mode == 'admin' ? this.organizer : token, this.teamColor, claim.name);
                     token = result.token;
                 } catch (err) {
                     console.log(err);
@@ -383,12 +393,13 @@ export default {
             this.locations.splice(id, 1);
         },
         async refreshClaims() {
+            this.$emit("map-refreshed");
             this.locations = _.cloneDeep(maps[this.map])
 
             this.claimed = [];
 
             let claimed = await this.$apex.getDrops(this.matchId, this.map);
-            // console.log(JSON.stringify(claimed));
+            this.drops = claimed;
 
             let token = localStorage.getItem("claim-token")
             this.selfDrops = await this.$apex.getDrops(this.matchId, this.map, token);

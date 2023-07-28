@@ -156,10 +156,10 @@ export default {
 }
 
 #credit1 {
-    left: 42px;
+    left: 1562px;
     text-align: center;
-    top: 370px;
+    top: 870px;
     position: absolute;
-    opacity: .95;
+    opacity: .9;
 }
 </style>

@@ -4,7 +4,6 @@
             <component v-for="overlay in scene.overlays" :is="overlay.type" :settings="overlay.settings" :stats="stats"
                 :matchId="matchId" :liveData="liveData" :key="overlay.id" :observer="observer" :observerTeam="observerTeam"
                 :observerPlayer="observerPlayer" :display="displayOptions" :organizer="organizer"/>
-            <div id="credit1" class="credit dark"><img width="150" src="/img/powered_by.png"></div>
             <!-- <div id="credit2" class="credit" :class="{ dark: displayOptions.dark }">Powered by overstat.gg</div> -->
         </div>
     </div>
@@ -137,7 +136,6 @@ export default {
 }
 
 .credit {
-    position: absolute;
 
     font-size: 16px;
     text-align: center;
@@ -146,9 +144,5 @@ export default {
     font-family: "heebo";
 }
 
-#credit1 {
-    left: 1700px;
-    text-align: center;
-    top: 1028px;
-}
+
 </style>

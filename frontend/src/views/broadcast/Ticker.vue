@@ -1,4 +1,6 @@
 <template>
+    <div>
+
     <div class="wrap" :class="{ styled: settings.styled, dark: settings.dark }"
         :style="`transform: translate(${calcTrans}, 0)`">
         <template v-if="stats.teams">
@@ -20,6 +22,8 @@
             </div>
         </template>
     </div>
+     <div id="credit1" class="credit dark"><img width="255" src="/img/powered_by_outlined.png"></div>
+</div>
 </template>
 
 <script>
@@ -149,5 +153,13 @@ export default {
     &.wrap {
         color: black;
     }
+}
+
+#credit1 {
+    left: 42px;
+    text-align: center;
+    top: 370px;
+    position: absolute;
+    opacity: .8;
 }
 </style>

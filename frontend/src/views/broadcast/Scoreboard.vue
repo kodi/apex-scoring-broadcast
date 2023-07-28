@@ -76,6 +76,10 @@
         </div>
       </div>
     </div>
+    <!-- <div id="credit1" class="credit dark"><img width="400" src="/img/powered_by_outlined.png"></div>
+    <div id="credit2" class="credit dark"><img width="400" src="/img/powered_by_outlined.png"></div> -->
+    <div id="credit1" class="credit dark"><img width="210" src="/img/powered_by_outlined.png"></div>
+
   </div>
 </template>
 
@@ -424,4 +428,26 @@ export default {
   height: 100%;
   width: 100%;
 }
+#credit1 {
+    left: 1695px;
+    text-align: center;
+    top: 1000px;
+    position: absolute;
+}
+// #credit1 {
+//     left: 1600px;
+//     text-align: center;
+//     top: 570px;
+//     position: absolute;
+//     opacity: .8;
+//     transform: rotate(-90deg);
+// }
+// #credit2 {
+//     left: -75px;
+//     text-align: center;
+//     top: 570px;
+//     position: absolute;
+//     opacity: .8;
+//     transform: rotate(-90deg);
+// }
 </style>

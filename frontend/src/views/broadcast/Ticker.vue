@@ -160,6 +160,6 @@ export default {
     text-align: center;
     top: 370px;
     position: absolute;
-    opacity: .8;
+    opacity: .95;
 }
 </style>

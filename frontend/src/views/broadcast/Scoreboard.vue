@@ -78,7 +78,7 @@
     </div>
     <!-- <div id="credit1" class="credit dark"><img width="400" src="/img/powered_by_outlined.png"></div>
     <div id="credit2" class="credit dark"><img width="400" src="/img/powered_by_outlined.png"></div> -->
-    <div id="credit1" class="credit dark"><img width="210" src="/img/powered_by_outlined.png"></div>
+    <div id="credit1" class="credit dark"><img width="240" src="/img/powered_by_outlined.png"></div>
 
   </div>
 </template>
@@ -429,7 +429,7 @@ export default {
   width: 100%;
 }
 #credit1 {
-    left: 1695px;
+    left: 1675px;
     text-align: center;
     top: 1000px;
     position: absolute;

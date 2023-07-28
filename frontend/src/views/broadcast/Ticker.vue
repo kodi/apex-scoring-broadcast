@@ -161,5 +161,6 @@ export default {
     top: 870px;
     position: absolute;
     opacity: .9;
+    display: none;
 }
 </style>

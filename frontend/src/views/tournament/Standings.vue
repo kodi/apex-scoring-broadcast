@@ -6,7 +6,7 @@
                 :to="{ name: 'tournament.standings.scoreboard', params: $props }">Scoreboard</router-link>
             <router-link class="subnav-link" :to="{ name: 'tournament.standings.player', params: $props }">Player
                 Standings</router-link>
-            <router-link class="subnav-link" :to="{ name: 'tournament.standings.team', params: $props }">Team
+            <router-link v-if="settings.matchType != 'player'" class="subnav-link" :to="{ name: 'tournament.standings.team', params: $props }">Team
                 Standings</router-link>
             <!-- <router-link class="subnav-link"
                 :to="{ name: 'tournament.standings.feed', params: $props }">Feed</router-link> -->
@@ -39,7 +39,7 @@
                     </div>
                 </v-col>
                 <v-col cols="12" sm="10">
-                    <router-view :stats="game == 'overall' ? stats : stats.games?.find(g => g.game == game)" :overall="stats"></router-view>
+                    <router-view :settings="settings" :stats="game == 'overall' ? stats : stats.games?.find(g => g.game == game)" :overall="stats"></router-view>
                 </v-col>
             </v-row>
         </div>
@@ -50,7 +50,7 @@
 import { getMapNameShort } from '../../utils/statsUtils';
 
 export default {
-    props: ["matchId", "game"],
+    props: ["matchId", "game", "settings"],
 
     data() {
         return {

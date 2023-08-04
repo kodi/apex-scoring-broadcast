@@ -22,7 +22,11 @@
                                 <v-card-title>Settings</v-card-title>
                                 <v-card-text>
                                     <v-text-field :value="eventId" label="Match Name" outlined readonly append-icon="fa-edit" @click:append="showEditDiag = Date.now()"></v-text-field>
-                                
+                                    <h4>Match Type</h4>
+                                    <v-radio-group v-model="matchType">
+                                        <v-radio label="Team (Standard)" value="team"></v-radio>
+                                        <v-radio label="Individual Players (eg Random Royale)" value="player"></v-radio>
+                                    </v-radio-group>
                                 </v-card-text>
                             </v-card>
                             <v-card class="ma-2">
@@ -216,7 +220,6 @@
 import _ from "lodash";
 import { getMapName, getMapNameShort } from "@/utils/statsUtils";
 import IconBtnFilled from "@/components/IconBtnFilled";
-import IconSpan from "@/components/IconSpan";
 import DropMap from "../../components/DropMap.vue";
 import { maps } from "@/utils/maps";
 import NewMatchDiag from "../../components/NewMatchDiag.vue";
@@ -225,7 +228,6 @@ export default {
     props: ["eventId", "organizer", "matchId"],
     components: {
         IconBtnFilled,
-        IconSpan,
         DropMap,
         NewMatchDiag,
     },
@@ -248,6 +250,7 @@ export default {
             showResetDiag: false,
             showEditDiag: false,
             dropHistory: [],
+            matchType: undefined,
         }
     },
     computed: {
@@ -280,6 +283,11 @@ export default {
         },
         dropTab() {
             this.refreshDropHistory();
+        },
+        async matchType(curr) {
+                await this.refreshPublicOptions(true); //hacky need better solution
+                this.publicData.matchType = curr;
+                await this.setPublicSettings();
         }
     },
     methods: {
@@ -288,7 +296,7 @@ export default {
         setPublicSettings() {
             this.$apex.setPublicSettings(this.matchId, this.publicData);
         },
-        async refreshPublicOptions() {
+        async refreshPublicOptions(noMatch) {
             if (this.eventId) {
                 let options = await this.$apex.getPublicSettings(this.matchId);
                 let overall = await this.$apex.getStats(this.matchId, "overall");
@@ -309,6 +317,8 @@ export default {
 
                 this.publicUrlDrops = (await this.getShortLink(this.publicFullUrlDrops)) || this.publicFullUrlDrops;
                 this.publicUrl = (await this.getShortLink(this.publicFullUrl)) || this.publicFullUrl;
+                if (!noMatch)
+                    this.matchType = this.publicData.matchType;
             }
         },
         async refreshDropHistory() {

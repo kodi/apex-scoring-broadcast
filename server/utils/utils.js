@@ -1,5 +1,5 @@
 const SCORE_ARRAY = [12, 9, 7, 5, 4, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
-const SCORE_SUMS = ["kills", "revivesGiven", "headshots", "assists", "survivalTime", "respawnsGiven", "damageDealt", "hits", "knockdowns", "shots", "grenadesThrown", "ultimatesUsed", "tacticalsUsed", "damageTaken"];
+const SCORE_SUMS = ["kills", "revivesGiven", "headshots", "assists", "survivalTime", "respawnsGiven", "damageDealt", "hits", "knockdowns", "shots", "grenadesThrown", "ultimatesUsed", "tacticalsUsed", "damageTaken", "score"];
 const _ = require("lodash");
 
 const defaultChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

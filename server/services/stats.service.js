@@ -12,9 +12,10 @@ function assembleStatsDocuments(games, teams, players, matchTeams) {
                 teamId: team.teamId,
                 name: team.name,
                 overall_stats: team,
-                player_stats: playersByGame[game.id].filter(player => player.teamId == team.teamId)
+                player_stats: playersByGame[game.id].filter(player => player.teamId == team.teamId).map(player => ({ ...player, score: team.score }))
             }
-        })
+        });
+        // game.players = game.teams.map(team => team.player_stats).flat();
     });
     return games.sort((a, b) => a.id - b.id);
 }

@@ -3,43 +3,66 @@ const _ = require("lodash");
 const displayOptions = {
     mode: ["team", "player"],
     display: {
-        team: [
-            "score",
-            "kills",
-            "damageDealt",
-            "damageTaken",
-            "revivesGiven",
-            "headshots",
-            "assists",
-            "respawnsGiven",
-            "hits",
-            "knockdowns",
-            "shots",
-            "grenadesThrown",
-            "tacticalsUsed",
-            "ultimatesUsed",
-            "bestGame",
-            "bestPlacement",
-            "bestKills",
-        ],
-        player: [
-            "score",
-            "kills",
-            "characterName",
-            "damageDealt",
-            "knockdowns",
-            "assists",
-            "survivalTime",
-            "headshots",
-            "hits",
-            "shots",
-            "respawnsGiven",
-            "revivesGiven",
-            "damageTaken",
-            "grenadesThrown",
-            "tacticalsUsed",
-            "ultimatesUsed",
-        ],
+        team: {
+            statscode: [
+                "score",
+                "kills",
+                "damageDealt",
+                "knockdowns",
+                "assists",
+                "survivalTime",
+                "headshots",
+                "hits",
+                "shots",
+                "respawnsGiven",
+                "revivesGiven",
+            ],
+            livedata: [
+                "score",
+                "kills",
+                "damageDealt",
+                "knockdowns",
+                "assists",
+                "survivalTime",
+                "respawnsGiven",
+                "revivesGiven",
+                "damageTaken",
+                "grenadesThrown",
+                "tacticalsUsed",
+                "ultimatesUsed",
+            ],
+        },
+        player: {
+            statscode: [
+                "score",
+                "kills",
+                "characterName",
+                "damageDealt",
+                "knockdowns",
+                "assists",
+                "survivalTime",
+                "headshots",
+                "hits",
+                "shots",
+                "respawnsGiven",
+                "revivesGiven",
+            ],
+            livedata: [
+                "score",
+                "kills",
+                "characterName",
+                "damageDealt",
+                "knockdowns",
+                "assists",
+                "survivalTime",
+                "respawnsGiven",
+                "revivesGiven",
+                "damageTaken",
+                "grenadesThrown",
+                "tacticalsUsed",
+                "ultimatesUsed",
+            ],
+        }
     },
     game: ["overall", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
 }
@@ -59,6 +82,7 @@ const statDisplayMapping = {
     "grenadesThrown": "Grenades",
     "tacticalsUsed": "Tacts",
     "ultimatesUsed": "Ults",
+    "teamPlacement": "Placement",
 }
 
 const statsDisplayMappingShort = {
@@ -94,8 +118,6 @@ const mapMapShort = {
     "mp_rr_desertlands_hu": "Worlds Edge",
 }
 
-
-
 function sortScores(scores, sortKey) {
     if (sortKey == "score") {
         sortKey = scores[0]?.position ? "position" : "score"
@@ -114,12 +136,12 @@ function sortScores(scores, sortKey) {
     return scores;
 }
 
-function getStatsByMode(teams, mode, overall) {
+function getStatsByMode(teams, mode) {
     if (mode == "team") {
         return teams.map(team => ({ teamId: team.teamId, ...team.overall_stats }));
     } else {
         let result = _(teams)
-            .map(team => [...team.player_stats.map(p => ({ ...p, score: overall?.games ? _.sum(overall.games.map(g => g?.teams?.find(t => t.player_stats.find(pl => pl.playerId == p.playerId))?.overall_stats?.score ?? 0)) : team.overall_stats.score }))])
+            .map(team => [...team.player_stats])
             .flatten()
             .groupBy("playerId")
             .map(player => player.reduce((val, cur) => {
@@ -129,8 +151,12 @@ function getStatsByMode(teams, mode, overall) {
 
                     if (!val[key]) {
                         val[key] = cur[key]
-                    } else if (key != "score" && !isNaN(cur[key])) {
+                    } else if (key != "playerId" && !isNaN(cur[key])) {
                         val[key] += cur[key];
+                    } else if (key == "characters") {
+                        val[key] = (val[key] ?? []);
+                        val[key].push(...cur[key]);
+                        val[key] = _.uniq(val[key]);
                     } else {
                         val[key] = cur[key];
                     }
@@ -168,6 +194,26 @@ function getMapNameShort(mapid) {
     return mapMapShort[mapid] || mapid;
 }
 
+function getStatsDisplayOptions(mode, overall = true, type = "statscode+livedata") {
+    let options = { ...displayOptions.display[mode] };
+
+    if (type.includes("+")) {
+        options = _.uniq(Object.values(options).flat());
+    } else {
+        options = options[type];
+    }
+
+    if (overall && options.includes("characterName")) {
+        options = options.filter(o => o != "characterName");
+        options.splice(2, 0, "characters");
+    }
+
+    if (overall && mode == "team") {
+        options.push("bestGame", "bestPlacement", "bestKills");
+    }
+
+    return options;
+}
 
 module.exports = {
     invertedStats,
@@ -181,4 +227,5 @@ module.exports = {
     getCharactersByTeam,
     getMapName,
     getMapNameShort,
+    getStatsDisplayOptions,
 }

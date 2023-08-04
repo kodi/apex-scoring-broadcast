@@ -1,7 +1,8 @@
 const { db } = require("../connectors/db");
 const { createPage } = require("../utils/pagnation");
 const { DEFAULT_PAGE_COUNT } = require("../config/const");
-const { SCORE_SUMS, getOrFn } = require("../utils/utils");
+let { SCORE_SUMS, getOrFn } = require("../utils/utils");
+SCORE_SUMS = SCORE_SUMS.filter(i => i != "score");
 
 async function listPlayers(start = 0, count = DEFAULT_PAGE_COUNT, search = "") {
     let players = await db("player_names")

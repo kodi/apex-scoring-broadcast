@@ -1,7 +1,6 @@
 const axios = require("axios");
 const _ = require("lodash");
-const { getOr, SCORE_ARRAY, SCORE_SUMS } = require("../utils/utils");
-
+let { getOr, SCORE_ARRAY, SCORE_SUMS } = require("../utils/utils");
 
 module.exports = function Apex(config) {
     console.log("Using ", config.statsUrl, " as Respawn API")
@@ -61,7 +60,6 @@ module.exports = function Apex(config) {
                     teamStats.name = t.name;
                     if (!teamStats.overall_stats.name)
                         teamStats.overall_stats.name = t.name;
-                    overall_stats.score += t.score;
                     overall_stats.bestGame = Math.max(overall_stats.bestGame, t.score);
                     overall_stats.bestPlacement = Math.min(overall_stats.bestPlacement, t.teamPlacement);
                     overall_stats.bestKills = Math.max(overall_stats.bestKills, t.kills);
@@ -132,9 +130,6 @@ module.exports = function Apex(config) {
             SCORE_SUMS.forEach(key => team.overall_stats[key] = getOr(team.overall_stats[key], 0) + getOr(player[key], 0));
             if (ringKillPoints && player.killFeed) {
                 player.killFeed.forEach(kill => {
-                    console.log("Scoring", player.name, kill.ring)
-                    console.log(parseInt(ringKillPoints["ring" + kill.ring.stage][kill.ring.state]))
-
                     team.overall_stats.score += parseInt(ringKillPoints["ring" + kill.ring.stage][kill.ring.state]);
                 })
             } else {

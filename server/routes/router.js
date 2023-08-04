@@ -63,9 +63,21 @@ module.exports = function setup(app) {
                 }
             }
 
+            let sources = stats.reduce((val, cur) => ({ statscode: val.statscode || cur.source.includes("statscode"), livedata: val.livedata || cur.source.includes("livedata") }), { statscode: false, livedata: false });
+            let source = "";
+            if (sources.statscode) {
+                source = "statscode";
+                if (sources.livedata) {
+                    source += "+livedata";
+                }
+            } else if (sources.livedata) {
+                source = "livedata";
+            }
+
             if (game == "overall" || stacked) {
                 stats = {
                     total: stats.length,
+                    source,
                     games: stats,
                     teams: apexService.generateOverallStats(stats),
                     stacked: stacked ? stats.map((_, index) => apexService.generateOverallStats(stats.slice(0, index + 1))) : undefined
@@ -109,7 +121,7 @@ module.exports = function setup(app) {
 
 
     app.get("/mock", (req, res) => {
-        const mockStats = require("../mock/eastats5.json")
+        const mockStats = require("../mock/eastats6.json")
         res.json(mockStats)
     })
 

@@ -23,15 +23,15 @@
             this.displayChoices.display = undefined;
         this.displayChoices.display2 = undefined;" dense></v-select>
         <v-select v-model="displayChoices.page" label="Page" :items="[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]" dense></v-select>
-        <v-select label="Column 1 (Sort)" v-if="displayChoices.mode" :items="displayOptions.display[displayChoices.mode]"
+        <v-select label="Column 1 (Sort)" v-if="displayChoices.mode" :items="getStatsDisplayOptions(displayChoices.mode)"
             v-model="displayChoices.display" dense></v-select>
-        <v-select label="Column 2" v-if="displayChoices.mode" :items="displayOptions.display[displayChoices.mode]"
+        <v-select label="Column 2" v-if="displayChoices.mode" :items="getStatsDisplayOptions(displayChoices.mode)"
             v-model="displayChoices.display2" clearable dense></v-select>
         <v-btn color="primary" @click="update()">Update</v-btn>
     </div>
 </template>
 <script>
-import { displayOptions } from "../../utils/statsUtils";
+import { displayOptions, getStatsDisplayOptions } from "../../utils/statsUtils";
 
 export default {
     props: ["value"],
@@ -49,7 +49,8 @@ export default {
     methods: {
         update() {
             this.$emit('input', { ...this.value, settings: this.displayChoices })
-        }
+        },
+        getStatsDisplayOptions
     }
 }
 </script>

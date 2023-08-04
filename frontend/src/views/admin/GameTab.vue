@@ -283,7 +283,7 @@ import SimpleScoreTable from '@/components/SimpleScoreTable.vue';
 import GameSelect from '@/components/GameSelect.vue';
 import Day from "dayjs";
 import IconBtnFilled from "@/components/IconBtnFilled";
-import { displayOptions, getDisplayName } from '../../utils/statsUtils';
+import { getStatsDisplayOptions, getDisplayName } from '../../utils/statsUtils';
 
 const DEFAULT_RING_KP = {
 	"ring0": {
@@ -370,13 +370,13 @@ export default {
 			return this.autoPollSettings?.pollStart && this.autoPollSettings.pollStart < now && this.autoPollSettings.pollEnd > now;
 		},
 		teamKeys() {
-			const teamKeys = displayOptions.display.team.map(key => {
+			const teamKeys = getStatsDisplayOptions("team").map(key => {
 				return { key, label: getDisplayName(key) }
 			})
 			return [{ key: "name", label: "Team Name" }, ...teamKeys]
 		},
 		playerKeys() {
-			const playerKeys = displayOptions.display.player.filter(key => key !== "score").map(key => {
+			const playerKeys = getStatsDisplayOptions("player").map(key => {
 				return { key, label: getDisplayName(key) }
 			})
 			return [{ key: "name", label: "Player Name" }, ...playerKeys]

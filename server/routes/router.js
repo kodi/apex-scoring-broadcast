@@ -135,6 +135,15 @@ module.exports = function setup(app) {
         const mockStats = require("../mock/eastats6.json")
         res.json(mockStats)
     })
+    
+    app.post("/view", async (req, res) => {
+        const {
+            to,
+            from
+        } = req.body;
+        await authService.pageView(to, from, req.socket.remoteAddress);
+        res.sendStatus(200);
+    })
 
     app.post("/auth/organizer", async (req, res) => {
         const {

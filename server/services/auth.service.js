@@ -35,9 +35,14 @@ async function createOrganizer(username) {
     return { username, key };
 }
 
+async function pageView(to, from, ip) {
+    await db("pageview").insert({to, from, ip})
+}
+
 module.exports = {
     getOrganizer,
     getOrganizerId,
     createOrganizer,
     getOrganizerByKey,
+    pageView,
 }

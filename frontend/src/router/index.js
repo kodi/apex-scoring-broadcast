@@ -161,4 +161,10 @@ const router = new VueRouter({
   routes
 });
 
+router.beforeEach((to, from, next) => {
+  console.log(to.fullPath, from.fullPath);
+  Vue.prototype.$apex.pageView(to.fullPath, from.fullPath);
+  next();
+})
+
 export default router;

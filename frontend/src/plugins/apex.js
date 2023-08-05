@@ -321,6 +321,9 @@ function apexService(config) {
         return data.data;
     }
 
+    async function pageView(to, from) {
+        await axios.post(`${config.baseUrl}view`, {to, from})
+    }
 
 
     return {
@@ -372,5 +375,6 @@ function apexService(config) {
         cloneMatch,
         cloneDataAndReset,
         updateEventId,
+        pageView,
     }
 }

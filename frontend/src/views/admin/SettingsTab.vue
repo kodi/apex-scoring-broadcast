@@ -193,15 +193,33 @@
                     </v-card>
                     <v-dialog v-model="enableDropsDiag" max-width="600px">
                         <v-card>
-                            <v-toolbar color="primary" class="toolbar" flat>Enable Drop
-                                Spots<v-spacer></v-spacer><icon-btn-filled icon="close"
+                            <v-toolbar color="primary" class="toolbar" flat>Configure Drops<v-spacer></v-spacer><icon-btn-filled icon="close"
                                     @click="enableDropsDiag = false"></icon-btn-filled></v-toolbar>
-                            <v-card-title>Choose Maps</v-card-title>
                             <v-card-text>
-                                <v-checkbox v-for="(id, name) in maps" :label="getMapName(id)" :key="name"
-                                    v-model="selectedMaps[name]" dense></v-checkbox>
-                                <!-- <v-checkbox v-model="enabled" label="Drop Selection Enabled"></v-checkbox> -->
-                                <v-text-field v-model="pass" label="Password"></v-text-field>
+                                <div class="ma-2">
+                                    <v-checkbox v-model="enabled" label="Enabled" dense hide-details></v-checkbox>
+                                    <v-checkbox v-model="allowClaiming" label="Allow Claiming" dense hide-details></v-checkbox>
+                                </div>
+                                <v-divider></v-divider>
+                                <v-row no-gutters class="ma-2">
+                                    <v-col v-for="(id, name) in maps" :key="name" cols="12">
+                                        <v-checkbox :label="getMapName(id)"  v-model="selectedMaps[name]" dense hide-details></v-checkbox>
+                                    </v-col>
+                                </v-row>
+                                <v-divider></v-divider>
+                                <div class="ma-2">
+                                    <v-checkbox label="Limit Contest" v-model="contestLimits.enabled" dense></v-checkbox>
+                                    <v-row>
+                                        <v-col cols="3">
+                                            <v-text-field :disabled="!contestLimits.enabled" label="Contest Per Map" outlined v-model.number="contestLimits.map" dense></v-text-field>
+                                        </v-col>
+                                        <v-col cols="3">
+                                            <v-text-field :disabled="!contestLimits.enabled" label="Teams Per POI" outlined v-model.number="contestLimits.poi" dense></v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                    
+                                    <v-text-field v-model="pass" label="Password" outlined dense></v-text-field>
+                                </div>
                                 <v-btn :disabled="!pass" color="primary" block class="my-3" @click="enableDrops">Submit</v-btn>
                             </v-card-text>
                         </v-card>
@@ -245,12 +263,18 @@ export default {
             dropTab: undefined,
             pass: "",
             enabled: true,
+            allowClaiming: true,
             maps,
             showCloneDiag: false,
             showResetDiag: false,
             showEditDiag: false,
             dropHistory: [],
             matchType: undefined,
+            contestLimits: {
+                enabled: false,
+                poi: 2,
+                map: 3,
+            }
         }
     },
     computed: {
@@ -312,6 +336,9 @@ export default {
                 }
 
                 this.pass = this.publicData.drops?.pass;
+                this.contestLimits = this.publicData.drops?.contestLimits ?? this.contestLimits;
+                this.allowClaiming = this.publicData.drops?.allowClaiming ?? this.allowClaiming;
+                this.enabled = this.publicData.drops?.enabled ?? this.enabled;
                 this.selectedMaps = {};
                 Object.keys(this.publicData.drops?.maps ?? {}).forEach(key => this.selectedMaps[key] = true);
 
@@ -341,6 +368,8 @@ export default {
                 pass: this.pass,
                 maps: enabledMaps,
                 enabled: this.enabled,
+                allowClaiming: this.allowClaiming,
+                contestLimits: this.contestLimits,
             }
             await this.setPublicSettings();
             this.enableDropsDiag = false;

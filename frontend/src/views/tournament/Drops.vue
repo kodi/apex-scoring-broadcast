@@ -1,5 +1,5 @@
 <template>
-    <div class="pa-12 text-center" v-if="!settings.drops">
+    <div class="pa-12 text-center" v-if="!settings.drops || settings.drops.enabled == false">
         <i>Drop spots have not been enabled for this tournament</i>
     </div>
     <div v-else class="overall-wrapper">
@@ -12,7 +12,7 @@
                     :to="{ name: 'tournament.drops', params: { ...$props, map: 'kings-canyon' } }">Kings Canyon</router-link>
         </div>
 
-        <DropMap class="ma-6" :map="selectedMap" :matchId="match.id" mode="claim"></DropMap>
+        <DropMap class="ma-6" :map="selectedMap" :matchId="match.id" mode="claim" :hide-claim="!this.settings.drops.allowClaiming"></DropMap>
 
     </div>
 </template>

@@ -15,7 +15,7 @@
             <v-btn @click="add">ADD</v-btn>
         </div>
         
-        <div class="actions text-center" v-if="mode == 'claim'">
+        <div class="actions text-center" v-if="mode == 'claim' && !hideClaim">
             <v-btn v-if="!claiming && !selfDrops?.length" color="primary" class="mt-2" @click="claimDropDiag = true">Claim Drop Spot</v-btn>
             <v-btn v-if="selfDrops?.length > 0" color="secondary" class="mt-2" @click="clearDrops">Clear Drop</v-btn>
             <v-btn v-if="claiming" color="primary" :disabled="claiming.length == 0" class="mt-2"
@@ -171,15 +171,15 @@
             </v-card>
         </v-dialog>
         <v-snackbar
-          v-model="wrongPassSnack" color="red"
+          v-model="errSnack" color="red"
         >
-          Wrong Password
+          {{snackMessage}}
           <template v-slot:action="{ attrs }">
             <v-btn
               color="primary"
               text
               v-bind="attrs"
-              @click="wrongPassSnack = false"
+              @click="errSnack = false"
             >
               Close
             </v-btn>
@@ -210,7 +210,7 @@ const downloadURI = (uri, name) => {
 }
 
 export default {
-    props: ["matchId", "map", "mode", "organizer", "eventId", "hideMap", "hidePoiNames", "hideDrops"],
+    props: ["matchId", "map", "mode", "organizer", "eventId", "hideMap", "hidePoiNames", "hideDrops", "hideClaim"],
     data() {
         return {
             claimDropDiag: false,
@@ -226,7 +226,8 @@ export default {
             claiming: undefined,
             claimed: [],
             console,
-            wrongPassSnack: false,
+            errSnack: false,
+            snackMessage: "",
             selfDrops: undefined,
             drops: [],
             enabled: false,
@@ -369,9 +370,10 @@ export default {
                     token = result.token;
                 } catch (err) {
                     console.log(err);
-                    if (err.response.data.err == "INVALID_PASSWORD") {
-                        this.wrongPassSnack = true;
+                    if (err.response.data.msg) {
+                        this.snackMessage = err.response.data.msg;
                     }
+                    this.errSnack = true;
                 }
             }
                 

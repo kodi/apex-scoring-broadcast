@@ -5,12 +5,28 @@ const _ = require("lodash");
 
 async function setDrop(matchId, pass, map, token, teamName, color, drop) {
     const settings = await matchService.getMatchSettings(matchId);
-    const dropPass = settings.drops.pass; // yea this gets sent to the client so its not exactly secure
-                                          // but it doesn't really matter for now
-    
-    if (pass !== dropPass) {
-        console.log(pass, dropPass)
-        return { err: "INVALID_PASSWORD" };
+
+    if (!settings.drops.enabled || !settings.drops.allowClaiming) {
+        return { err: "DISABLED", msg: "Claiming is currently disabled" };
+    }
+
+    if (pass !== settings.drops.pass) {
+        return { err: "INVALID_PASSWORD", msg: "Wrong Password" };
+    }
+
+    if (settings.drops.contestLimits?.enabled) {
+        let teams = await getMatchDrops(matchId, map);
+        let grouped = _.groupBy(Object.values(teams).flat(), "drop");
+
+        let mapContest = Object.values(grouped).filter(g => g.length > 1).length;
+        let poiContest = grouped[drop]?.length ?? 0;
+        if (mapContest >= settings.drops.contestLimits.map && grouped[drop]?.length) {
+            return { err: "MAX_CONTEST_MAP", msg: "Max contest of " + settings.drops.contestLimits.map + " has been reached for this map."};
+        }
+
+        if (poiContest >= settings.drops.contestLimits.poi) {
+            return { err: "MAX_CONTEST_POI", msg: "Max contest of " + settings.drops.contestLimits.poi + " has been reached for this poi." };
+        }
     }
 
     if (!token || token === "null") {
@@ -22,7 +38,6 @@ async function setDrop(matchId, pass, map, token, teamName, color, drop) {
 }
 
 async function deleteDrop(matchId, map, token, drop) {
-    console.log("deleting normal", matchId, map, token, drop, drop == undefined, drop === "undefined")
     if (drop) {
         await db("drops").update({ "deletedAt": db.fn.now(6), deletedBy: token }).where({ matchId, map, token, drop });
     } else {
@@ -31,7 +46,6 @@ async function deleteDrop(matchId, map, token, drop) {
 }
 
 async function deleteDropsAdmin(organizerName, matchId, map, teamName) {
-    console.log("deleting admin", matchId, map, "'" + teamName + "'");
     if (teamName) {
         await db("drops").update({ "deletedAt": db.fn.now(6), deletedBy: organizerName }).where({ matchId, map, teamName }).whereNull("deletedAt");
     } else {

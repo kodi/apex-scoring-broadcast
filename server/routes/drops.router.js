@@ -10,12 +10,11 @@ module.exports = function setup(app) {
             map,
             pass,
             color,
-            drop
+            drop,
+            admin,
         } = req.body;
 
-        console.log(req.body);
-
-        let result = await dropService.setDrop(matchId, pass, map, token, teamName, color, drop);
+        let result = await dropService.setDrop(matchId, pass, map, token, teamName, color, drop, admin);
         if (result.err) {
             res.status(400).send(result);
         } else {
@@ -58,7 +57,6 @@ module.exports = function setup(app) {
         }
 
         let result = token ? await dropService.getMatchDropsByToken(matchId, map, token) : await dropService.getMatchDrops(matchId, map);
-        console.log(result);
         res.send(result);
     })
 
@@ -73,7 +71,6 @@ module.exports = function setup(app) {
         }
 
         let result = await dropService.getMatchDropsHistory(matchId, map);
-        console.log(result);
         res.send(result);
     })
 

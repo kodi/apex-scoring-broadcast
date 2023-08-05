@@ -125,10 +125,10 @@
 									<v-tab-item>
 										<v-card class="elevation-0 grey darken-4">
 											<!-- <v-card-title>Stats Code</v-card-title> -->
-											<v-card-subtitle>Use your EA provided stats code to fetch stats. The latest game
-												will be
-												used by
+											<v-card-subtitle>Use your EA provided stats code to fetch stats. The latest game will be used by
 												default, or use the game selector to select a previous game.
+												<br>
+												You can auto-score up to 3 codes by comma seperating the codes (statscode,statscode,statscode)
 											</v-card-subtitle>
 											<v-card-text>
 												<v-text-field :disabled="isAutoPolling" v-model="statsCode"

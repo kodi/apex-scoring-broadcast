@@ -22,23 +22,34 @@ module.exports = function setup(app) {
         let cacheKey = `match_polling_skip_${matchId}`;
         let now = Date.now();
 
-        let lastPoll = await redis.set(cacheKey, now, "EX", 90, "NX");
+        let lastPoll = await redis.set(cacheKey, now, "EX", 45, "NX");
 
         if (lastPoll === "OK") {
             const pollingSettings = await matchService.getMatchPolling(matchId);
 
             if (pollingSettings?.pollStart && pollingSettings.pollStart < now && pollingSettings.pollEnd > now) {
-                let stats = await apexService.getStatsFromCode(pollingSettings.statsCodes);
-                let newStats = stats.filter(stat => !pollingSettings.pollCurrent || console.log(matchId, pollingSettings.pollCurrent, stat.match_start * 1000, pollingSettings.pollCurrent < (stat.match_start * 1000) ) || pollingSettings.pollCurrent < (stat.match_start * 1000));
-                let latestGame = await statsService.getLatestedGame(matchId);
+                let codes = pollingSettings.statsCodes.split(",");
+                let newStats = await Promise.all(codes.map(async code => {
+                    console.log("polling", code);
+                    let stats = await apexService.getStatsFromCode(code);
+                    let games = await statsService.getGameList(matchId);
+                    let mids = games.map(game => game.mid);
 
+                    let newStats = stats.filter(stat => stat.match_start * 1000 > pollingSettings.pollStart && !mids.includes(stat.mid));
+                    return newStats;
+                }));
+              
+                console.log(newStats);
+                newStats = newStats.flat();
 
-                for (let stat of newStats) {
-                    await processStats(matchId, ++latestGame.game, stat);
+                if (newStats && newStats.length > 0) {
+                    let latestGame = await statsService.getLatestedGame(matchId);
+
+                    for (let stat of newStats) {
+                        await processStats(matchId, ++latestGame.game, stat);
+                    }
                 }
-                if(newStats.length > 0)
-                    await matchService.updateMatchPolling(matchId, now);
-
+               
             }
         }
     }

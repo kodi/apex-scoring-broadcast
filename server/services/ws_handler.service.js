@@ -152,4 +152,5 @@ module.exports = {
     connectRead,
     getClients,
     addClient,
+    clients,
 }

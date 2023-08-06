@@ -435,6 +435,10 @@ module.exports = function setup(app) {
         res.sendStatus(200);
     });
 
+    app.get("/live/status", async (req, res) => {
+        res.send(wsHandlerService.clients);
+    })
+
     app.ws("/", (ws) => {
         ws.on("message", (msg) => console.log(msg));
     })

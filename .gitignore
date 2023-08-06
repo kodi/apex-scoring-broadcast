@@ -113,3 +113,4 @@ __*
 *.fleet/
 
 server/mock/live/send.js
+/certbot

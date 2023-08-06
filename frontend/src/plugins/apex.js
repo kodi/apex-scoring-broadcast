@@ -26,7 +26,7 @@ function apexService(config) {
             return eventId.replace(/[\W_]+/g, "_").substring(0, 30);
     }
 
-    function getMatchPageUrl(router, organizer, matchId, eventId, page = "tournament", game = "overall") {
+    function getMatchPageUrl(router, organizer, matchId, eventId, page = "tournament.standings.scoreboard", game = "overall") {
         eventId = sanatizedEventId(eventId);
         return window.location.origin + router.resolve({ name: page, params: { organizer: organizer, matchSlug: matchId + (eventId ? '.' + eventId : ""), game} }).href
     }

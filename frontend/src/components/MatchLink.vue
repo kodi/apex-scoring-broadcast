@@ -1,5 +1,5 @@
 <template>
-    <router-link :to="{ name: to ?? 'tournament', params: { matchSlug: linkId, organizer, gameId: gameId ?? 'overall' } }">
+    <router-link :to="{ name: to ?? 'tournament.standings.scoreboard', params: { matchSlug: linkId, organizer, game: gameId ?? 'overall' } }">
         <slot></slot>
     </router-link>
 </template>

@@ -282,7 +282,7 @@ export default {
            return this.$apex.getMatchPageUrl(this.$router, this.organizer, this.matchId, this.eventId);
         },
         publicFullUrlDrops() {
-            return window.location.origin + this.$router.resolve({ name: 'tournament.drops', params:  { organizer: this.organizer, matchSlug: this.matchId } }).href;
+            return this.$apex.getMatchPageUrl(this.$router, this.organizer, this.matchId, this.eventId,'tournament.drops');
         },
         summaryUrl() {
             return encodeURI(`${this.$apex.config.fullUrl}stats/${this.matchId}/summary`);

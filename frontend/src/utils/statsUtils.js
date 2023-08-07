@@ -16,6 +16,7 @@ const displayOptions = {
                 "shots",
                 "respawnsGiven",
                 "revivesGiven",
+                "accuracy",
             ],
             livedata: [
                 "score",
@@ -46,6 +47,7 @@ const displayOptions = {
                 "shots",
                 "respawnsGiven",
                 "revivesGiven",
+                "accuracy",
             ],
             livedata: [
                 "score",

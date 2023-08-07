@@ -135,6 +135,8 @@
                                 l.name }}</text>
                      </g>
                 </template>
+                <image v-if="!hideMap" x="10" y="5" width="250" height="60" href="/img/powered_by_outlined.png" />
+
             </svg>
             <template v-if="mode != 'display'">
                 <div class="export">

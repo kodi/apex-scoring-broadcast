@@ -12,7 +12,7 @@
                     :to="{ name: 'tournament.drops', params: { ...$props, map: 'kings-canyon' } }">Kings Canyon</router-link>
         </div>
 
-        <DropMap class="ma-6" :map="selectedMap" :matchId="match.id" mode="claim" :hide-claim="!this.settings.drops.allowClaiming"></DropMap>
+        <DropMap class="ma-6" :map="selectedMap" :matchId="match.id" mode="dev" :hide-claim="!this.settings.drops.allowClaiming"></DropMap>
 
     </div>
 </template>

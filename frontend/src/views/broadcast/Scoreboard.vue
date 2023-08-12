@@ -28,8 +28,8 @@
               </div>
             </div>
             <component :is="settings.animate ? 'transition-group' : 'dev'" name="score-transition">
-              <div class="column" :class="'transition-' + (score.index - offset)" v-for="(score, index) in sortedScores" :i="score.name + index + settings.display" :key="score.name + settings.display + settings.game" sm="6">
-                <div v-if="!score.fill" class="score-wrap">
+              <div class="column" :class="'transition-' + (score?.index - offset)" v-for="(score, index) in sortedScores" :i="score?.name + index + settings.display" :key="score?.name + settings.display + settings.game" sm="6">
+                <div v-if="score && !score.fill" class="score-wrap">
                   <div class="score-item score-index" :class="{ 'score-index-styled': settings.styled }"> {{ score.index }}
                   </div>
                   <div v-if="settings.mode == 'team'" class="score-item score-name"

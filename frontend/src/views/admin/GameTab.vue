@@ -384,8 +384,15 @@ export default {
 	},
 	watch: {
 		async statsCode() {
-			this.games = await this.$apex.getStatsFromCode(this.statsCode);
+			let result = await this.$apex.getStatsFromCode(this.statsCode);
 			this.selectedGame = undefined;
+			console.log(result)
+			if(result.err) {
+				this.error = result;
+				this.showError = true;
+			} else {
+				this.games = result;
+			}
 		},
 		async eventId() {
 			this.loaded = false;

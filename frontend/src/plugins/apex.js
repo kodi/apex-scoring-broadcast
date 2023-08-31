@@ -38,8 +38,12 @@ function apexService(config) {
     }
 
     async function getStatsFromCode(statsCode) {
-        let stats = await axios.get(`${config.baseUrl}stats/code/${statsCode}`, { headers: getApiKeyHeaders() });
-        return stats.data;
+        try {
+            let stats = await axios.get(`${config.baseUrl}stats/code/${statsCode}`, { headers: getApiKeyHeaders() });
+            return stats.data;
+        } catch (err) {
+            return err.response.data;
+        }
     }
 
     async function getStats(matchId, game) {

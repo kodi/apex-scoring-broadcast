@@ -166,10 +166,17 @@ module.exports = function setup(app) {
     })
 
     app.get("/stats/code/:statsCode", verifyOrganizerHeaders, async (req, res) => {
-        let stats = await apexService.getStatsFromCode(req.params.statsCode);
-        stats = stats.map(stat => apexService.generateGameReport(stat));
+        try {
+            let stats = await apexService.getStatsFromCode(req.params.statsCode);
+            stats = stats.map(stat => apexService.generateGameReport(stat));
 
-        res.send(stats);
+            res.send(stats);
+        } catch (err) {
+            if (err.response.status == 429)
+                res.status(500).send({ err: "rate_limit", msg: "Rate limited by Respawn" });
+            else
+                res.status(500).send({ err: "err", msg: "An unknown error occured" });
+        }
     })
 
     app.post("/stats", verifyOrganizerHeaders, async (req, res) => {
@@ -178,7 +185,13 @@ module.exports = function setup(app) {
 
         let respawnStats = undefined;
         if (statsCode && statsCode.length > 0 && statsCode !== "undefined") {
-            respawnStats = await apexService.getMatchFromCode(statsCode, startTime);
+            try {
+                respawnStats = await apexService.getMatchFromCode(statsCode, startTime);
+            } catch (err) {
+                if (err.response.status == 429) {
+                    return res.status(429).send({ err: "rate_limit", msg: "Rate limited by Respawn." });
+                }
+            }
         }
 
         if (!respawnStats && !liveDataFile && !selectedUnclaimed) {

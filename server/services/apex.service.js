@@ -6,12 +6,16 @@ module.exports = function Apex(config) {
     console.log("Using ", config.statsUrl, " as Respawn API")
 
     async function getStatsFromCode(statsCode) {
-        let stats = await getStatsFromEA(statsCode);
-        if (stats.matches) {
-            stats = stats.matches.sort((a, b) => b.match_start - a.match_start);
-            return stats;
+        try {
+            let stats = await getStatsFromEA(statsCode);
+            if (stats.matches) {
+                stats = stats.matches.sort((a, b) => b.match_start - a.match_start);
+                return stats;
+            }
+            return [];
+        } catch (err) {
+            throw err;
         }
-        return [];
     }
 
     async function getMatchFromCode(statsCode, startTime) {
@@ -161,6 +165,7 @@ module.exports = function Apex(config) {
     }
 
     async function getStatsFromEA(apexCode) {
+        console.log("Getting status code", apexCode);
         let stats = await axios(config['statsUrl'] + apexCode);
 
         return stats.data;

@@ -208,16 +208,16 @@
                                 </v-row>
                                 <v-divider></v-divider>
                                 <div class="ma-2">
+                                    <!-- <v-checkbox label="Disallow Multiple Primarys"  v-model="disableMultiplePrimarys" dense hide-details></v-checkbox> -->
                                     <v-checkbox label="Limit Contest" v-model="contestLimits.enabled" dense></v-checkbox>
                                     <v-row>
                                         <v-col cols="3">
-                                            <v-text-field :disabled="!contestLimits.enabled" label="Contest Per Map" outlined v-model.number="contestLimits.map" dense></v-text-field>
+                                            <v-text-field :disabled="!contestLimits.enabled" label="Contest Per Map" outlined v-model.number="contestLimits.map" dense ></v-text-field>
                                         </v-col>
                                         <v-col cols="3">
-                                            <v-text-field :disabled="!contestLimits.enabled" label="Teams Per POI" outlined v-model.number="contestLimits.poi" dense></v-text-field>
+                                            <v-text-field :disabled="!contestLimits.enabled" label="Teams Per POI" outlined v-model.number="contestLimits.poi" dense ></v-text-field>
                                         </v-col>
                                     </v-row>
-                                    
                                     <v-text-field v-model="pass" label="Password" outlined dense></v-text-field>
                                 </div>
                                 <v-btn :disabled="!pass" color="primary" block class="my-3" @click="enableDrops">Submit</v-btn>
@@ -274,7 +274,8 @@ export default {
                 enabled: false,
                 poi: 2,
                 map: 3,
-            }
+            },
+            disableMultiplePrimarys: false,
         }
     },
     computed: {
@@ -339,6 +340,7 @@ export default {
                 this.contestLimits = this.publicData.drops?.contestLimits ?? this.contestLimits;
                 this.allowClaiming = this.publicData.drops?.allowClaiming ?? this.allowClaiming;
                 this.enabled = this.publicData.drops?.enabled ?? this.enabled;
+                this.disableMultiplePrimarys = this.publicData.drops.disableMultiplePrimarys ?? this.disableMultiplePrimarys;
                 this.selectedMaps = {};
                 Object.keys(this.publicData.drops?.maps ?? {}).forEach(key => this.selectedMaps[key] = true);
 
@@ -370,6 +372,7 @@ export default {
                 enabled: this.enabled,
                 allowClaiming: this.allowClaiming,
                 contestLimits: this.contestLimits,
+                disableMultiplePrimarys: this.disableMultiplePrimarys,
             }
             await this.setPublicSettings();
             this.enableDropsDiag = false;

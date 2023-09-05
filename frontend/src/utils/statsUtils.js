@@ -99,23 +99,27 @@ const statsDisplayMappingShort = {
 const mapMap = {
     "mp_rr_canyonlands_hu": "Kings Canyon (Season 14)",
     "mp_rr_tropic_island_mu1": "Storm Point (Season 13)",
+    "mp_rr_tropic_island_mu1_storm_lc": "Storm Point (Season 18, Limited Contest)",
     "mp_rr_tropic_island_mu1_storm": "Storm Point (Season 18)",
     "mp_rr_desertlands_mu3": "Worlds Edge (Season 10)",
     "mp_rr_desertlands_mu4": "Worlds Edge (Season 16)",
     "mp_rr_olympus_mu2": "Olympus (Season 12)",
     "mp_rr_divided_moon": "Broken Moon (Season 15)",
     "mp_rr_desertlands_hu": "Worlds Edge (Season 17)",
+    "mp_rr_desertlands_hu_lc": "Worlds Edge (Season 17, Limited Contest)",
 }
 
 const mapMapShort = {
     "mp_rr_canyonlands_hu": "Kings Canyon",
     "mp_rr_tropic_island_mu1": "Storm Point",
+    "mp_rr_tropic_island_mu1_storm_lc": "Storm Point",
     "mp_rr_tropic_island_mu1_storm": "Storm Point",
     "mp_rr_desertlands_mu3": "Worlds Edge",
     "mp_rr_desertlands_mu4": "Worlds Edge",
     "mp_rr_olympus_mu2": "Olympus",
     "mp_rr_divided_moon": "Broken Moon",
     "mp_rr_desertlands_hu": "Worlds Edge",
+    "mp_rr_desertlands_hu_lc": "Worlds Edge",
 }
 
 function sortScores(scores, sortKey) {

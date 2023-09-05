@@ -14,8 +14,10 @@ async function setDrop(matchId, pass, map, token, teamName, color, drop) {
         return { err: "INVALID_PASSWORD", msg: "Wrong Password" };
     }
 
+    let teams;
+
     if (settings.drops.contestLimits?.enabled) {
-        let teams = await getMatchDrops(matchId, map);
+        teams = await getMatchDrops(matchId, map);
         let grouped = _.groupBy(Object.values(teams).flat(), "drop");
 
         let mapContest = Object.values(grouped).filter(g => g.length > 1).length;
@@ -27,6 +29,12 @@ async function setDrop(matchId, pass, map, token, teamName, color, drop) {
         if (poiContest >= settings.drops.contestLimits.poi) {
             return { err: "MAX_CONTEST_POI", msg: "Max contest of " + settings.drops.contestLimits.poi + " has been reached for this poi." };
         }
+    }
+
+    if (settings.drops.disableMultiplePrimarys) {
+        teams = teams ?? await getMatchDrops(matchId, map);
+        let grouped = _.groupBy(Object.values(teams).flat(), "teamName");
+        console.log(grouped);
     }
 
     if (!token || token === "null") {

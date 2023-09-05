@@ -2,7 +2,7 @@ module.exports = {
     mapConfigs: {
         mp_rr_tropic_island_mu1: require("./maps/mp_rr_tropic_island_mu1.json"),
         mp_rr_tropic_island_mu1_storm: require("./maps/mp_rr_tropic_island_mu1_storm.json"),
-        mp_rr_tropic_island_mu1_storm_lc: require("./maps/mp_rr_tropic_island_mu1_lc.json"),
+        mp_rr_tropic_island_mu1_storm_lc: require("./maps/mp_rr_tropic_island_mu1_storm_lc.json"),
         mp_rr_desertlands_hu: require("./maps/mp_rr_desertlands_hu.json"),
         mp_rr_desertlands_hu_lc: require("./maps/mp_rr_desertlands_hu_lc.json"),
         mp_rr_canyonlands_hu: require("./maps/mp_rr_canyonlands_hu.json"),

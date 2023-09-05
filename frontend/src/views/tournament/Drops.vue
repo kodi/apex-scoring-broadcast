@@ -6,8 +6,12 @@
         <div class="subnav">
             <router-link v-if="this.settings.drops.maps['storm-point']" class="subnav-link"
                 :to="{ name: 'tournament.drops', params: { ...$props, map: 'storm-point' } }">Storm Point</router-link>
+            <router-link v-if="this.settings.drops.maps['storm-point-lc']" class="subnav-link"
+                :to="{ name: 'tournament.drops', params: { ...$props, map: 'storm-point-lc' } }">Storm Point</router-link>
             <router-link v-if="this.settings.drops.maps['worlds-edge']" class="subnav-link"
                 :to="{ name: 'tournament.drops', params: { ...$props, map: 'worlds-edge' } }">Worlds Edge</router-link>
+            <router-link v-if="this.settings.drops.maps['worlds-edge-lc']" class="subnav-link"
+                :to="{ name: 'tournament.drops', params: { ...$props, map: 'worlds-edge-lc' } }">Worlds Edge</router-link>
             <router-link v-if="this.settings.drops.maps['kings-canyon']" class="subnav-link"
                     :to="{ name: 'tournament.drops', params: { ...$props, map: 'kings-canyon' } }">Kings Canyon</router-link>
         </div>

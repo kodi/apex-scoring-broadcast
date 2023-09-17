@@ -429,6 +429,11 @@ module.exports = function setup(app) {
         wsHandlerService.connectWrite(ws, req.params.key, req.params.client);
     })
 
+    app.ws("/live/read/:org/:client/:key?", (ws, req) => {
+        let org = authService.getOrganizerByKey(req.params.key);
+        wsHandlerService.connectRead(ws, req.params.org, req.params.client, org);
+    })
+
     app.ws("/live/read/:org/:client", (ws, req) => {
         wsHandlerService.connectRead(ws, req.params.org, req.params.client);
     })

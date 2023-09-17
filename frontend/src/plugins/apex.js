@@ -304,10 +304,10 @@ function apexService(config) {
     }
 
     let connections = {};
-    function getLiveDataWs(organizer, client) {
+    function getLiveDataWs(organizer, client, admin) {
         const name = organizer + ":" + client;
         if (!connections[name]) {
-            connections[name] = new WebSocket(`${config.wsReadUrl}/${organizer}/${client}`);
+            connections[name] = new WebSocket(`${config.wsReadUrl}/${organizer}/${client}` + (admin ? `/${this.getApiKey()}` : ""));
             connections[name].onclose = () => {
                 connections[name] = undefined
             };

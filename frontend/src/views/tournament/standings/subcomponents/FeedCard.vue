@@ -47,7 +47,7 @@
 
 
 <script>
-import WeaponIcon from './WeaponIcon.vue';
+import WeaponIcon from '@/components/WeaponIcon.vue';
 
 export default {
     props: ['feed', "startTime"],

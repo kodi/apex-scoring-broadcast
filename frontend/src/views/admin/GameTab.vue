@@ -507,6 +507,7 @@ export default {
 		},
 		async getUnclaimedLiveData() {
 			this.unclaimedLiveData = await this.$apex.getUnclaimedLiveData();
+			this.unclaimedLiveData = this.unclaimedLiveData.reverse();
 		},
 		getDate(timestamp) {
 			return Intl.DateTimeFormat(navigator.language, { month: 'short', day: 'numeric', year: "numeric" }).format(new Date(timestamp))

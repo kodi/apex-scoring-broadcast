@@ -13,7 +13,11 @@
             <router-link v-if="this.settings.drops.maps['worlds-edge-lc']" class="subnav-link"
                 :to="{ name: 'tournament.drops', params: { ...$props, map: 'worlds-edge-lc' } }">Worlds Edge</router-link>
             <router-link v-if="this.settings.drops.maps['kings-canyon']" class="subnav-link"
-                    :to="{ name: 'tournament.drops', params: { ...$props, map: 'kings-canyon' } }">Kings Canyon</router-link>
+                :to="{ name: 'tournament.drops', params: { ...$props, map: 'kings-canyon' } }">Kings Canyon</router-link>
+            <router-link v-if="this.settings.drops.maps['olympus']" class="subnav-link"
+                :to="{ name: 'tournament.drops', params: { ...$props, map: 'olympus' } }">Olympus</router-link>
+            <router-link v-if="this.settings.drops.maps['broken-moon']" class="subnav-link"
+                :to="{ name: 'tournament.drops', params: { ...$props, map: 'broken-moon' } }">Broken Moon</router-link>
         </div>
 
         <DropMap class="ma-6" :map="selectedMap" :matchId="match.id" mode="claim" :hide-claim="!this.settings.drops.allowClaiming"></DropMap>

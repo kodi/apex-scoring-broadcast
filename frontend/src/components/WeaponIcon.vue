@@ -2,16 +2,21 @@
     <span>
         <img v-show="loaded" class="white-svg pa-2" style="transform: scaleX(-1);" height="30"
             :src="`/weapon_icons/${feed.weapon}.svg`" @load="loaded = true" />
-        <span class="pa-2 white--text" v-if="!loaded">[{{ feed.weapon }}]</span>
+        <span class="pa-2 white--text" v-if="!loaded && hideUnknown != ''">[{{ feed.weapon }}]</span>
     </span>
 </template>
 
 <script>
 export default {
-    props: ["feed"],
+    props: ["feed", "hideUnknown"],
     data() {
         return {
             loaded: false,
+        }
+    }, 
+    watch: {
+        feed() {
+            this.loaded = false;
         }
     }
 }

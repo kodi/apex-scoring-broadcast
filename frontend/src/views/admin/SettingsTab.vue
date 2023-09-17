@@ -340,7 +340,7 @@ export default {
                 this.contestLimits = this.publicData.drops?.contestLimits ?? this.contestLimits;
                 this.allowClaiming = this.publicData.drops?.allowClaiming ?? this.allowClaiming;
                 this.enabled = this.publicData.drops?.enabled ?? this.enabled;
-                this.disableMultiplePrimarys = this.publicData.drops.disableMultiplePrimarys ?? this.disableMultiplePrimarys;
+                this.disableMultiplePrimarys = this.publicData?.drops?.disableMultiplePrimarys ?? this.disableMultiplePrimarys;
                 this.selectedMaps = {};
                 Object.keys(this.publicData.drops?.maps ?? {}).forEach(key => this.selectedMaps[key] = true);
 

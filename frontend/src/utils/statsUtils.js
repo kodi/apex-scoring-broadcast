@@ -122,6 +122,36 @@ const mapMapShort = {
     "mp_rr_desertlands_hu_lc": "Worlds Edge",
 }
 
+const weaponMap = {
+    'mp_weapon_dragon_lmg': "Rampage",
+    'mp_weapon_semipistol': "P2020",
+    'mp_weapon_thermite_grenade': "Thermite",
+    'mp_weapon_energy_ar': "Havoc",
+    'mp_weapon_doubletake': "TripleTake",
+    'mp_weapon_vinson': "Flatline",
+    'mp_weapon_car': "Car",
+    'mp_weapon_lmg': "Spitfire",
+    'mp_weapon_shotgun': "EVA-8",
+    'mp_weapon_grenade_emp': "Arcstar",
+    'mp_weapon_nemesis': "Nemesis",
+    'mp_weapon_r97': "R-99",
+    'mp_weapon_dmr': "Longbow",
+    'mp_weapon_wingman': "Wingman",
+    'mp_weapon_volt_smg': "Volt",
+    'mp_weapon_autopistol': "RE-45",
+    'mp_weapon_rspn101': "R-301",
+    'mp_weapon_esaw': "Devotion",
+    'mp_weapon_3030': "30-30",
+    'mp_weapon_defender': "Chage_Rifle",
+    'mp_weapon_mastiff': "Mastiff",
+    'mp_weapon_pdw': "Prowler",
+    'mp_weapon_shotgun_pistol': "Mozambique",
+    'mp_weapon_g2': "G7Scout",
+    'mp_weapon_energy_shotgun': "Peacekeeper",
+    'mp_weapon_sniper': "Kraber",
+    'mp_weapon_bow': "Bowcek",
+}
+
 function sortScores(scores, sortKey) {
     if (sortKey == "score") {
         sortKey = scores[0]?.position ? "position" : "score"
@@ -198,6 +228,10 @@ function getMapNameShort(mapid) {
     return mapMapShort[mapid] || mapid;
 }
 
+function getWeaponName(weapon) {
+    return weaponMap[weapon] ?? weapon;
+}
+
 function getStatsDisplayOptions(mode, overall = true, type = "statscode+livedata") {
     let options = { ...displayOptions.display[mode] };
 
@@ -232,4 +266,5 @@ module.exports = {
     getMapName,
     getMapNameShort,
     getStatsDisplayOptions,
+    getWeaponName,
 }

@@ -90,7 +90,8 @@ async function connectWrite(ws, api_key, client) {
         return;
     }
 
-    addClient(org.username, client, true);
+    addClient(org.username, client, ws, true);
+
 
     ws.on("message", async msg => {
         let parsed = JSON.parse(msg);
@@ -115,7 +116,7 @@ async function connectWrite(ws, api_key, client) {
     ws.on("close", () => clients[org.username][client].connected = false);
 }
 
-async function connectRead(ws, orgUser, client) {
+async function connectRead(ws, orgUser, client, admin = false) {
     console.log("Connected read for ", orgUser, client);
     const channel = "ld-" + orgUser + "-" + client;
     pubsub.subscribe(channel);
@@ -136,15 +137,20 @@ async function connectRead(ws, orgUser, client) {
         if (msg.type == "ldrqfull") {
             await sendFull();
         }
+        if (msg.type == "command" && admin) {
+            let ws = getClients(orgUser)?.[client].ws;
+            console.log("Sending ", msg.cmd)
+            ws.send(JSON.stringify(msg.cmd));
+        }
     });
 
     ws.on("close", () => console.log("Closed", orgUser, client));
 }
 
-function addClient(organizerName, client, connected = false) {
+function addClient(organizerName, client, ws, connected = false) {
     console.log("Adding write client ", organizerName, client, connected)
     clients[organizerName] = (clients[organizerName] ?? {})
-    clients[organizerName][client] = { connected, state: "preinit" };
+    clients[organizerName][client] = { connected, ws, state: "preinit" };
 }
 
 module.exports = {

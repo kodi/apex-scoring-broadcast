@@ -263,6 +263,7 @@ function convertLiveDataToRespawnApi(data) {
             match_start: data.match_start,
             player_results,
             server: `(${data.serverConfig.datacenter.name})${data.serverConfig.serverId}`,
+            mid: data.serverConfig.serverId,
             map_name: data.serverConfig.map,
             aim_assist_allowed: !data.serverConfig.aimAssistOn,
             anonymousMode: data.serverConfig.anonymousMode,

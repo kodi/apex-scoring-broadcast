@@ -4,7 +4,7 @@
             <v-toolbar class="toolbar" flat>{{message}}<v-spacer></v-spacer><icon-btn-filled icon="close"
                 @click="newMatchDiag = false"></icon-btn-filled></v-toolbar>
             <v-card-text>
-            <v-text-field label="Match ID" v-model="newMatchId"></v-text-field>
+            <v-text-field label="Match Name" v-model="newMatchId"></v-text-field>
             <v-btn @click="addRandom()">+ Random</v-btn><v-btn @click="addDate" class="mx-2">+ Date</v-btn><v-btn @click="addTime">+ Time</v-btn>
             <!-- <v-text-field label="Display Name (optional)" v-model="newMatchName"></v-text-field> -->
 

@@ -145,7 +145,6 @@ body {
 }
 
 #app {
-  background: $first-tone;
   background: $page-bg;
 }
 

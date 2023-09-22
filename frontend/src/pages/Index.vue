@@ -80,7 +80,7 @@ body {
 }
 
 .title-toolbar {
-    background-color: $second-tone;
+    background-color: $first-tone;
 }
 
 .public-header {
@@ -107,7 +107,7 @@ body {
 
 .view-more {
     height: 25px;
-    background: $second-tone;
+    background: $first-tone;
     font-size: .9em;
     text-align: center;
 }

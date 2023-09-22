@@ -19,7 +19,7 @@ async function get(key) {
     }
 }
 
-async function getOrSet(key, func, time) {
+async function getOrSet(key, func, time = 300) {
     let result = await get(key);
     if (result) {
         return result;

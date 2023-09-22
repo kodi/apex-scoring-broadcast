@@ -177,19 +177,23 @@
 												<h3>Live Data v2 (Streamed)</h3>
 												<v-divider class="my-2" />
 
-												<v-item-group v-if="unclaimedLiveData?.length > 0"
+												<v-item-group class="live-data-items" v-if="liveDataList?.length > 0"
 													v-model="selectedUnclaimed">
-													<v-item class="live-data-item" v-for="unclaimed in unclaimedLiveData"
+													<v-item class="live-data-item" v-for="unclaimed in liveDataList"
 														v-slot="{ toggle }" :key="unclaimed.id">
-														<div @click="toggle"> ({{ unclaimed.client }}) {{
+														<v-card dense @click="toggle">
+														<v-card-title>{{ unclaimed.client ?? "Unnamed Client" }} </v-card-title> 
+														<v-card-subtitle>{{
 															getDate(unclaimed.timestamp * 1000) }}
 															{{ getTime(unclaimed.timestamp * 1000) }} -
 															{{ getRelative(unclaimed.timestamp * 1000) }}
-
-														</div>
+														</v-card-subtitle>
+														<v-card-actions><v-btn @click.stop="preview(unclaimed.id)" color="primary">Preview</v-btn></v-card-actions>
+														</v-card>
 													</v-item>
 												</v-item-group>
-												<div v-else><i>No Streamed Live Data. </i></div>
+												<div v-else><i v-if="recentOnly">No Recent Data. </i><i v-else>No Live Data.</i></div>
+												<div class="text-center" v-if="recentOnly"><a @click="recentOnly = false">Show Older Data</a></div>
 												<h3 class="pt-4">Live Data v1 (Manual Upload) </h3>
 												<v-divider class="my-2" />
 
@@ -220,12 +224,14 @@
 							</v-tabs>
 							<v-tabs-items v-model="tabs">
 								<v-tab-item>
-									<v-btn @click="openCSVDialog('overall')">Export CSV</v-btn>
+									<v-btn @click="previewGame(stats)" class="ma-1" color="secondary">Preview</v-btn>
+									<v-btn @click="openCSVDialog('overall')" class="ma-1"  color="secondary">Export CSV</v-btn>
 									<simple-score-table :stats="stats"></simple-score-table>
 								</v-tab-item>
 								<v-tab-item v-for="(game, index) in stats.games" :key="index">
-									<v-btn @click="openCSVDialog(game.game)">Export CSV</v-btn>
-									<v-btn @click="deleteStats(game.game)">Delete</v-btn>
+									<v-btn @click="previewGame(game)" class="ma-1"  color="secondary">Preview</v-btn>
+									<v-btn @click="openCSVDialog(game.game)" class="ma-1"  color="secondary">Export CSV</v-btn>
+									<v-btn @click="deleteStats(game.game)" class="ma-1"  color="secondary">Delete</v-btn>
 									<simple-score-table :stats="game" @edit="edit"></simple-score-table>
 								</v-tab-item>
 							</v-tabs-items>
@@ -253,26 +259,28 @@
 				</v-snackbar>
 
 
-				<!-- <v-tooltip bottom style="pointer-events: all" v-model="showLiveHelp">
-			<template v-slot:activator="{}">
-				<v-btn @click="showLiveHelp = !showLiveHelp" color="primary"
-					text><v-icon>mdi-information</v-icon>How
-					To</v-btn>
-			</template>
-			<ul>
-				<li>Add the launch arg:
-					<pre>+cl_liveapi_enabled 1</pre>
-				</li>
-				<li>Create a custom lobby and join the observer slot.
-				</li>
-				<li>Start the game. <i>You must be an observer</i></li>
-				<li>When the game is finished the data will be in
-					<pre>%USERPROFILE%\Saved Games\Respawn\Apex\assets\temp\live_api</pre>
-				</li>
-				<li>Upload the file that coresponds with this game (probably the latest)
-				</li>
-			</ul>
-		</v-tooltip> -->
+				<v-dialog v-model="showPreviewDiag" fullscreen transition="dialog-bottom-transition">
+					<v-toolbar class="toolbar">
+						<v-toolbar-title>Preview</v-toolbar-title>
+						<v-spacer></v-spacer>
+						<v-btn icon dark @click="showPreviewDiag = false">
+							<v-icon>mdi-close</v-icon>
+						</v-btn>
+					</v-toolbar>
+					<v-card>
+						<v-card v-if="!previewData" max-width="600" class="ma-auto" dark>
+							<v-card-text>
+							Loading Stats
+							<v-progress-linear
+								indeterminate
+								color="white"
+								class="mb-0"
+							></v-progress-linear>
+							</v-card-text>
+						</v-card>
+						<ScoreTablePreview v-else :stats="previewData"></ScoreTablePreview>
+					</v-card>
+				</v-dialog>
 			</v-row>
 		</template>
 	</v-container>
@@ -283,6 +291,7 @@ import SimpleScoreTable from '@/components/SimpleScoreTable.vue';
 import GameSelect from '@/components/GameSelect.vue';
 import Day from "dayjs";
 import IconBtnFilled from "@/components/IconBtnFilled";
+import ScoreTablePreview from '../../components/ScoreTablePreview.vue';
 import { getStatsDisplayOptions, getDisplayName } from '../../utils/statsUtils';
 
 const DEFAULT_RING_KP = {
@@ -319,7 +328,8 @@ export default {
 	components: {
 		GameSelect,
 		SimpleScoreTable,
-		IconBtnFilled
+		IconBtnFilled,
+		ScoreTablePreview,
 	},
 	props: [
 		"eventId",
@@ -351,7 +361,7 @@ export default {
 			error: {},
 			showLiveHelp: false,
 			loading: false,
-			unclaimedLiveData: [],
+			liveDataList: [],
 			selectedUnclaimed: undefined,
 			ringKillPoints: DEFAULT_RING_KP,
 			useRingKillPoints: false,
@@ -359,6 +369,10 @@ export default {
 			autoPollSettings: undefined,
 			loaded: false,
 			showPollingStart: false,
+			recentOnly: true,
+			unusedOnly: false,
+			showPreviewDiag: false,
+			previewData: undefined,
 		}
 	},
 	computed: {
@@ -398,6 +412,7 @@ export default {
 			this.loaded = false;
 			await this.updateStats();
 			await this.fetchSettings();
+			await this.getLiveDataList();
 		},
 		ringKillPoints: {
 			deep: true,
@@ -431,6 +446,9 @@ export default {
 					name: true,
 					kills: true
 				}
+		},
+		recentOnly() {
+			this.getLiveDataList();
 		}
 	},
 	methods: {
@@ -472,7 +490,7 @@ export default {
 				this.trimmedStatsCode,
 				this.game,
 				this.selectedGame,
-				this.unclaimedLiveData?.[this.selectedUnclaimed]?.id,
+				this.liveDataList?.[this.selectedUnclaimed]?.id,
 				this.liveData,
 			);
 			if (result.err) {
@@ -505,9 +523,8 @@ export default {
 			await this.$apex.deleteStats(this.matchId, game);
 			await this.updateStats();
 		},
-		async getUnclaimedLiveData() {
-			this.unclaimedLiveData = await this.$apex.getUnclaimedLiveData();
-			this.unclaimedLiveData = this.unclaimedLiveData.reverse();
+		async getLiveDataList() {
+			this.liveDataList = await this.$apex.getLiveDataList(this.recentOnly, false);
 		},
 		getDate(timestamp) {
 			return Intl.DateTimeFormat(navigator.language, { month: 'short', day: 'numeric', year: "numeric" }).format(new Date(timestamp))
@@ -544,18 +561,28 @@ export default {
 
 			await this.$nextTick();
 			this.loaded = true;
+		},
+		previewGame(game) {
+			this.previewData = game;
+			this.showPreviewDiag = true;
+		},
+		async preview(id) {
+			this.previewData = undefined;
+			this.showPreviewDiag = true;
+			this.previewData = await this.$apex.getLiveDataById(id);
 		}
 	},
 	async mounted() {
 		this.updateStats();
 
-		this.getUnclaimedLiveData();
-		this.inter = setInterval(() => this.getUnclaimedLiveData(), 5000);
+		this.getLiveDataList();
+		this.inter = setInterval(() => this.getLiveDataList(), 20000);
 		this.inter2 = setInterval(() => this.updateStats(), 1000 * 60 * 2);
 		await this.fetchSettings();
 	},
 	destroyed() {
 		clearInterval(this.inter);
+		clearInterval(this.inter2);
 	}
 }
 </script>
@@ -590,4 +617,14 @@ export default {
 	&.v-item--active {
 		background: $primary;
 	}
-}</style>
+}
+
+.live-data-items {
+	max-height: 600px;
+	overflow: auto;
+}
+
+.toolbar.v-sheet.v-toolbar {
+  background-color: $primary !important;
+}
+</style>

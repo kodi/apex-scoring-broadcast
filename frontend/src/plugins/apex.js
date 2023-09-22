@@ -243,13 +243,18 @@ function apexService(config) {
         return data.data;
     }
 
-    async function getLiveData(matchId, game) {
-        let data = await axios.get(`${config.baseUrl}stats/${matchId}/${game}/livedata`);
+    async function getLiveData(gameId) {
+        let data = await axios.get(`${config.baseUrl}stats/${gameId}/livedata`);
         return data.data;
     }
 
-    async function getUnclaimedLiveData() {
-        let data = await axios.get(`${config.baseUrl}stats/unclaimed_livedata`, { headers: getApiKeyHeaders() });
+    async function getLiveDataById(id, format = "stats") {
+        let data = await axios.get(`${config.baseUrl}stats/livedata/${id}?format=${format}`);
+        return data.data;
+    }
+
+    async function getLiveDataList(recent, unused) {
+        let data = await axios.get(`${config.baseUrl}stats/livedata?recent=${recent}&unused=${unused}`, { headers: getApiKeyHeaders() });
         return data.data;
     }
 
@@ -354,12 +359,13 @@ function apexService(config) {
         deleteStats,
         getLatest,
         getShortLink,
-        getLiveData,
+        getLiveDataList,
         getPlayers,
         getPlayer,
         getPlayerMatches,
         getLiveDataWs,
-        getUnclaimedLiveData,
+        getLiveData,
+        getLiveDataById,
         getClients,
         setOrganizerDefaultApexClient,
         getOrganizerDefaultApexClient,

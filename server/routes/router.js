@@ -108,7 +108,6 @@ module.exports = function setup(app) {
         const killPoints = matchSettings?.scoring?.killPoints;
         const ringKillPoints = matchSettings?.scoring?.ringKillPoints;
 
-
         let gameStats, source;
         if (statsData && liveData) {
             gameStats = apexService.mergeStats(statsData, liveData);
@@ -243,18 +242,17 @@ module.exports = function setup(app) {
     })
 
 
-    app.get("/stats/:matchId/:game/livedata", async (req, res) => {
+    app.get("/stats/:gameId/livedata", async (req, res) => {
         const {
-            matchId,
-            game
+            gameId
         } = req.params;
 
-        let key = `stats:${matchId}-${game}-livedata-parsed`;
+        let key = `stats:${gameId}-livedata-parsed`;
         try {
             let data = await cache.getOrSet(key, async () => {
-                let gameId = await statsService.hasLiveData(matchId, game);
+                let livedataId = await statsService.hasLiveData(gameId);
 
-                if (!gameId) {
+                if (!livedataId) {
                     return { err: "err_no_data", msg: "This game doesn't have any live data attached" }
                 }
                 let data = await statsService.getLiveData(gameId);
@@ -270,8 +268,44 @@ module.exports = function setup(app) {
         }
     })
 
-    app.get("/stats/unclaimed_livedata", verifyOrganizerHeaders, async (req, res) => {
-        res.send(await statsService.getUnclaimedLiveData(req.organizer.id));
+    app.get("/stats/livedata", verifyOrganizerHeaders, async (req, res) => {
+        const {
+            unused,
+            recent
+        } = req.query;
+        res.send(await statsService.getLiveDataList(req.organizer.id, unused != "false", recent != "false"));
+    })
+
+    app.get("/stats/livedata/:id", async (req, res) => {
+        const {
+            format
+        } = req.query;
+
+        const id = req.params.id;
+
+        // TODO: we can skip all this if cache exist
+        let data = await cache.getOrSet(`livedata:${id}-data`, async () => await statsService.getLiveDataById(req.params.id));
+        if (format == "raw") {
+            return res.send(data);
+        }
+    
+        let parsed = await cache.getOrSet(`livedata:${id}-parsed`, async () => liveService.processDataDump(data));
+        if (format == "livedata") {
+            return res.send(parsed);
+        }
+
+        let respawn = await cache.getOrSet(`livedata:${id}-respawn`, async () => liveService.convertLiveDataToRespawnApi(parsed));
+        if (format == "respawn") {
+            return res.send(respawn)
+        }
+
+        if(respawn.matches.length == 1) {
+            let stats = await cache.getOrSet(`livedata:${id}-stats`, async () => apexService.generateGameReport(respawn.matches[0]));
+            stats.observers = Object.values(parsed.observers).map(o => ({nucleusHash: o.nucleusHash, name: o.name}));
+            if (!format || format == "stats") {
+                return res.send(stats);
+            }
+        }
     })
 
     app.get("/games/:matchId", async (req, res) => {

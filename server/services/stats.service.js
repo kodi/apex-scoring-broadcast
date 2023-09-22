@@ -183,16 +183,14 @@ async function writeLiveData(gameId, data, organizer, client) {
     await db("livedata").insert({ gameId, data, timestamp, organizer, client });
 }
 
-async function setLiveDataGame(liveId, gameId) {
-    await db("livedata").update({ gameId }).where({ id: liveId });
+async function setLiveDataGame(livedata, gameId) {
+    await db("game").update({ livedata }).where({ id: gameId });
 }
 
-async function hasLiveData(matchId, game) {
-    if (!isNaN(game)) {
-        let result = await db("game").first("*").where({ matchId, game });
-        if (result && result.source.includes("livedata")) {
-            return result.id;
-        }
+async function hasLiveData(gameId) {
+    if (!isNaN(gameId)) {
+        let result = await db("game").first("livedata").where({id: gameId });
+        return result.livedata;
     }
 }
 
@@ -204,18 +202,28 @@ async function getLiveDataById(liveDataId) {
 }
 
 async function getLiveData(gameId) {
-    let data = await db("livedata")
+    let data = await db("game")
+        .join("livedata", "livedata.id", "game.livedata")
         .first("*")
-        .where({ gameId });
+        .where({ "game.id": gameId });
     return JSON.parse(data.data);
 }
 
-async function getUnclaimedLiveData(organizer) {
-    let data = await db("livedata")
+async function getLiveDataList(organizer, unused = true, recent = true) {
+    let query = db("livedata")
         .select(["id", "timestamp", "client"])
         .where({ organizer })
-        .whereNull("gameId");
-    return data;
+
+    if (recent) {
+        let time = Math.floor((Date.now() - (1000 * 60 * 60 * 72)) / 1000);
+        query.andWhere("timestamp", ">", time);
+    }
+    
+    if (unused)
+        query.whereNull("gameId");
+
+    query.orderBy("timestamp", "desc");
+    return await query;
 }
 
 async function getLatestedGame(matchId) {
@@ -237,7 +245,7 @@ module.exports = {
     hasLiveData,
     getLiveData,
     setLiveDataGame,
-    getUnclaimedLiveData,
+    getLiveDataList,
     getLiveDataById,
     editScore,
     editKills,

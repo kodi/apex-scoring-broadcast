@@ -125,11 +125,8 @@ export default {
             this.stats.teams.forEach(team => this.updateExpanded(team.name))
         },
         getPlacement(team) {
-          const teamId = parseInt(team.teamId, 10)
             if (this.stats.games) {
-              const placement = this.stats.games.map(game => game.teams.find(t => t.teamId === teamId)?.overall_stats?.teamPlacement || undefined);//.sort((a, b) => a - b);
-              console.log(placement);
-              return placement
+              return this.stats.games.map(game => game.teams.find(t => t.teamId === team.teamId)?.overall_stats?.teamPlacement || undefined);//.sort((a, b) => a - b);
             }
         },
         getAvgPlacement(team) {

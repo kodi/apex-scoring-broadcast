@@ -1,6 +1,6 @@
 {
     "statsPath": "./stats",
-    "statsUrl": "http://localhost:3000/mock?=",
+    "statsUrl": "http://localhost:3001/mock?=",
     "adminKey": "key",
     "db": {
         "client": "pg",
@@ -8,11 +8,11 @@
             "user": "postgres",
             "password": "postgrespw",
             "host": "localhost",
-            "port": "5432",
+            "port": "5433",
             "database": "apex"
         },
-        "pool": { 
-            "min": 0, 
+        "pool": {
+            "min": 0,
             "max": 10
         }
     },

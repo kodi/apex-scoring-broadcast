@@ -23,7 +23,7 @@
             <div class="leaderboard-container">
                 <div class="entry-main">
                     <div class="entry-header">
-                        <v-row class="entry-header-row">
+                        <v-row class="entry-header-row" @click="updateExpanded(team.name)">
                             <v-col sm="4" md="5" cols="8" class="team-name">
                                 {{ team.name }}
 
@@ -36,7 +36,7 @@
                             <v-col md="2" cols="2" class="score" v-if="stats.games">{{ getAvgPlacement(team) }} </v-col>
 
                             <v-col md="1" cols="1" class="score">{{ team.overall_stats.kills }}</v-col>
-                            <v-btn icon class="float-icon" @click="updateExpanded(team.name)"><v-icon>{{
+                            <v-btn icon class="float-icon"><v-icon>{{
                                 expanded[team.name]
                                 ? 'mdi-menu-up' : 'mdi-menu-down'
                             }}</v-icon></v-btn>
@@ -49,7 +49,7 @@
                             <thead>
                                 <tr>
                                     <td>&nbsp;</td>
-                                    <td v-for="key in statsKeys" :key="key" class="text-capitalize">{{ key !=
+                                    <td v-for="key in statsKeys" :key="key" class="text-capitalize">{{ key !==
                                         'characterName' ? getDisplayName(key) : "" }}</td>
                                 </tr>
                             </thead>
@@ -59,7 +59,7 @@
                                     <PlayerLink :player="player">{{ player.name }}</PlayerLink>
                                 </td>
                                 <td v-for="key in statsKeys" :key="key">
-                                    <template v-if="key == 'characterName'">
+                                    <template v-if="key === 'characterName'">
                                         <template v-if="player.characters"><img class="team-character"
                                                 v-for="character in player.characters" :key="character" height="25"
                                                 :src="'/legend_icons/' + character + '.webp'"></template>
@@ -125,8 +125,12 @@ export default {
             this.stats.teams.forEach(team => this.updateExpanded(team.name))
         },
         getPlacement(team) {
-            if (this.stats.games)
-                return this.stats.games.map(game => game.teams.find(t => t.teamId == team.teamId)?.overall_stats?.teamPlacement || undefined);//.sort((a, b) => a - b);
+          const teamId = parseInt(team.teamId, 10)
+            if (this.stats.games) {
+              const placement = this.stats.games.map(game => game.teams.find(t => t.teamId === teamId)?.overall_stats?.teamPlacement || undefined);//.sort((a, b) => a - b);
+              console.log(placement);
+              return placement
+            }
         },
         getAvgPlacement(team) {
             return (_.sum(this.getPlacement(team)) / this.stats.total).toFixed(1);
@@ -226,7 +230,13 @@ export default {
 }
 
 .entry-header-row {
+    cursor: pointer;
     padding-right: 25px;
+    user-select: none;
+}
+
+.entry-header-row:hover {
+  background: $first-tone-hover;
 }
 
 .header-row {

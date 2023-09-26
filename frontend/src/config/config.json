@@ -1,8 +1,8 @@
 {
   "api": {
-    "baseUrl": "http://localhost:3001/",
-    "fullUrl": "http://localhost:3001/",
-    "wsReadUrl": "ws://localhost:3001/live/read",
-    "wsWriteUrl": "ws://localhost:3001/live/write"
+    "baseUrl": "http://localhost:3000/",
+    "fullUrl": "http://localhost:3000/",
+    "wsReadUrl": "ws://localhost:3000/live/read",
+    "wsWriteUrl": "ws://localhost:3000/live/write"
   }
 }
